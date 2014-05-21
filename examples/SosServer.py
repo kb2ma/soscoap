@@ -1,28 +1,43 @@
-import asyncore, socket
+#!/usr/bin/python
+# Copyright (c) 2014, Ken Bannister
+# All rights reserved. 
+#  
+# Released under the Mozilla Public License 2.0, as published at the link below.
+# http://opensource.org/licenses/MPL-2.0
+import asyncore
+import logging
+import socket
+
+logging.basicConfig(filename='server.log', level=logging.DEBUG, 
+                    format='%(asctime)s %(module)s %(message)s')
+log = logging.getLogger(__name__)
 
 COAP_PORT      = 5683
 SOCKET_BUFSIZE = 1024
 
 class SosServer(asyncore.dispatcher):
-   def __init__(self):
-      asyncore.dispatcher.__init__(self)
+    def __init__(self):
+        log.info("Server starting")
+        asyncore.dispatcher.__init__(self)
 
-      self.create_socket(socket.AF_INET, socket.SOCK_DGRAM)
-      self.bind(('', COAP_PORT))
+        self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        self.bind(('::1', COAP_PORT))
+        log.info("Server ready")
 
-   # Even though UDP is connectionless this is called when it binds to a port
-   def handle_connect(self):
-      print "Server Started..."
+    # This is called everytime there is something to read
+    def handle_read(self):
+        data, addr = self.recvfrom(SOCKET_BUFSIZE)
+        print str(addr)+" >> "+data
 
-   # This is called everytime there is something to read
-   def handle_read(self):
-      data, addr = self.recvfrom(SOCKET_BUFSIZE)
-      print str(addr)+" >> "+data
+    # This is called all the time and causes errors if you leave it out.
+    def handle_write(self):
+        pass
 
-   # This is called all the time and causes errors if you leave it out.
-   def handle_write(self):
-      pass
-
+# Start the server
 SosServer()
-asyncore.loop()
+try:
+    asyncore.loop()
+except KeyboardInterrupt:
+    log.info('Server closed')
+
 
