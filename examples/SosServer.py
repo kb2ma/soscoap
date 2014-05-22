@@ -4,6 +4,12 @@
 #  
 # Released under the Mozilla Public License 2.0, as published at the link below.
 # http://opensource.org/licenses/MPL-2.0
+'''
+Defines SosServer, an example server for the SOS CoAP library.
+
+Start the server with:
+   >python SosServer.py
+'''
 import asyncore
 import logging
 import socket
@@ -17,6 +23,7 @@ SOCKET_BUFSIZE = 1024
 
 class SosServer(asyncore.dispatcher):
     def __init__(self):
+        '''Bind the socket to the CoAP port; ready to read'''
         log.info("Server starting")
         asyncore.dispatcher.__init__(self)
 
@@ -24,14 +31,14 @@ class SosServer(asyncore.dispatcher):
         self.bind(('::1', COAP_PORT))
         log.info("Server ready")
 
-    # This is called everytime there is something to read
     def handle_read(self):
         data, addr = self.recvfrom(SOCKET_BUFSIZE)
-        print str(addr)+" >> "+data
+        
+        debugTmpl  = 'Read from {0}; data {1}' 
+        log.debug(debugTmpl.format(addr, ' '.join([hex(ord(b)) for b in data])))
 
-    # This is called all the time and causes errors if you leave it out.
-    def handle_write(self):
-        pass
+    def writable(self):
+        return False
 
 # Start the server
 SosServer()
