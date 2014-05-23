@@ -15,4 +15,10 @@ class NullHandler(logging.Handler):
 pkglog = logging.getLogger(__name__)        
 pkglog.addHandler(NullHandler())
 
+def _enum(**enums):
+    return type('Enum', (), enums)
+
 COAP_PORT = 5683
+
+MsgType = _enum(CON=0, NON=1, ACK=2, RST=3)
+

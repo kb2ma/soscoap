@@ -9,6 +9,7 @@ Provides an asynchronous, select/poll based socket for CoAP message I/O.
 '''
 import asyncore
 import logging
+import message
 import socket
 import soscoap
 
@@ -30,7 +31,8 @@ class AsyncSocket(asyncore.dispatcher):
         if log.isEnabledFor(logging.DEBUG):
             hexstr = ' '.join(['{:02x}'.format(ord(b)) for b in data])
             log.debug('Read from {0}; data (hex) {1}'.format(addr, hexstr))
-        #msg = sos.message.buildFrom(data=data, addr=addr)
+            
+        msg = message.buildFrom(addr=addr, bytestr=data)
 
     def writable(self):
         return False
