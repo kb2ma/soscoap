@@ -9,7 +9,7 @@ Tests for the message module.
 '''
 import logging
 import pytest
-import soscoap as coap
+from   soscoap import MessageType
 from   soscoap import message
 
 logging.basicConfig(filename='test.log', level=logging.DEBUG, 
@@ -27,5 +27,5 @@ verGetMsg = '\x40\x01\x6c\x29\xb3\x76\x65\x72'
 def test_simpleGet():
     msg = message.buildFrom(bytestr=verGetMsg)
     
-    assert msg.version == 1
-    assert msg.type    == coap.MsgType.CON
+    assert msg.version     == 1
+    assert msg.messageType == MessageType.CON
