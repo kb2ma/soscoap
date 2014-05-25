@@ -25,6 +25,7 @@ class Server(object):
 # Start the server
 try:
     server = Server()
+    print 'Sock it to me!'
     asyncore.loop()
 except KeyboardInterrupt:
     log.info('Server closed')

@@ -5,7 +5,8 @@
 # as published at the link below.
 # http://opensource.org/licenses/LGPL-3.0
 '''
-Provides an asynchronous, select/poll based socket for CoAP message I/O.
+Provides an asynchronous, select/poll socket for CoAP message I/O, based on
+Python's built-in asyncore module.
 '''
 import asyncore
 import logging
