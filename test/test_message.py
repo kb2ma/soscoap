@@ -34,5 +34,4 @@ def test_simpleGet():
     assert msg.messageId   == 27689  # 0x6C29
     assert msg.token       == None
     
-    assert str(msg) == 'CoapMessage( t:CON )'
-    log.debug('print output for GET /ver: {0}'.format(str(msg)))
+    assert msg.absolutePath()  == '/ver'
