@@ -5,35 +5,48 @@
 # as published at the link below.
 # http://opensource.org/licenses/LGPL-3.0
 '''
-Provides an asynchronous, select/poll socket for CoAP message I/O, based on
-Python's built-in asyncore module.
+Provides the MessageSocket class.
 '''
 import asyncore
 import logging
 import message
 import socket
 import soscoap
+from   soscoap import event
 
 log = logging.getLogger(__name__)
 
 SOCKET_BUFSIZE = 1024
-
-class AsyncSocket(asyncore.dispatcher):
+                
+class MessageSocket(asyncore.dispatcher):
+    '''Source for network CoAP messages. Implemented as a select/poll-based socket,
+    based on the the built-in asyncore module. A client registers for notification 
+    of message reception events.
+    
+    Attributes:
+        :_receiveHook: EventHook Notifies of a message received
+    '''
     def __init__(self):
-        '''Bind the socket to the CoAP port; ready to read'''
+        '''Binds the socket to the CoAP port; ready to read'''
         asyncore.dispatcher.__init__(self)
+        
+        self._receiveHook = event.EventHook()
 
         self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
         self.bind(('::1', soscoap.COAP_PORT))
-        log.info("AsyncSocket ready")
-
+        log.info("MessageSocket ready")
+        
+    def registerForReceive(self, handler):
+        self._receiveHook.register(handler)
+        
     def handle_read(self):
         data, addr = self.socket.recvfrom(SOCKET_BUFSIZE)
         if log.isEnabledFor(logging.DEBUG):
             hexstr = ' '.join(['{:02x}'.format(ord(b)) for b in data])
             log.debug('Read from {0}; data (hex) {1}'.format(addr, hexstr))
             
-        msg = message.buildFrom(addr=addr, bytestr=data)
+        coapmsg = message.buildFrom(addr=addr, bytestr=data)
+        self._receiveHook.notify(coapmsg)
 
     def writable(self):
         return False

@@ -12,7 +12,9 @@ Start the server on POSIX with:
 '''
 import logging
 import asyncore
-import soscoap.netsock as sos_sock
+from   soscoap import msgsock
+from   soscoap import MessageType
+from   soscoap import RequestCode
 
 logging.basicConfig(filename='server.log', level=logging.DEBUG, 
                     format='%(asctime)s %(module)s %(message)s')
@@ -20,7 +22,25 @@ log = logging.getLogger(__name__)
 
 class Server(object):
     def __init__(self):
-        self.socket = sos_sock.AsyncSocket()
+        self.socket = msgsock.MessageSocket()
+        self.socket.registerForReceive(self._handleMessage)
+        
+        self._resourceGetHook = EventHook()
+                
+    def registerForResourceGet(self, handler):
+        self._resourceGetHook.register(handler)
+        
+    def _handleMessage(self, message):
+        if message.messageType == MessageType.CON:
+            if message.codeDetail == RequestCode.GET:
+                log.debug('Handling resource GET request...')
+                # Get path and trigger resource event
+                #resource = Resource(message.absolutePath, message)
+                #self._resourceGetHook.notify(resource)
+                pass
+    
+    def send(self, resource):
+        pass
 
 # Start the server
 try:

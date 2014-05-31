@@ -34,4 +34,7 @@ def test_simpleGet():
     assert msg.messageId   == 27689  # 0x6C29
     assert msg.token       == None
     
+    assert len(msg.options)     == 1
+    assert msg.options[0].value == 'ver'
+    
     assert msg.absolutePath()  == '/ver'

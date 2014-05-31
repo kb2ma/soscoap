@@ -7,23 +7,27 @@
 '''
 Definitions for CoAP constants.
 
-Includes a custom enum type to map a constant to a value. For example, the value 
-of the code for a confirmable message type is an integer provided by the MessageType
-enum::
+Enum type:
+    Includes a custom enum type to map a constant to a value. For example, the value 
+    of the code for a confirmable message type is an integer provided by the MessageType
+    enum::
 
-    MessageType.CON --> 0
+        MessageType.CON --> 0
 
-Enums also support reverse lookup via the '_key' attribute. For example::
+    Enums also support reverse lookup via the '_reverse' attribute. For example::
 
-    MessageType._key[0] --> 'CON'
-    
-The values for an enum may be traditional integers or objects. If the value is 
-an object, the enum definition uses an enum-specific integer as the key for this 
-reverse lookup. In addition, the reverse lookup returns the value object rather
-then the enum key. For example::
+        MessageType._reverse[0] --> 'CON'
+        
+    The values for an enum may be traditional integers or objects. If the value is 
+    an object, the reverse lookup is based on a *_reverseFunc* enum element, which
+    returns the lookup integer for an object. For example::
 
-    OptionType._key[11]   --> 'UriPath'
-    OptionType._value[11] --> OptionType instance for OptionType.UriPath
+        OptionType = _enum(
+            _reverseFunc  = lambda opt: opt.number,
+            IfMatch       = OptionType(1, 'If-Match', True, 'opaque', (0,8), None),
+            ...
+
+        OptionType._reverse[1] --> OptionType instance for OptionType.IfMatch
 '''
 import logging
 
@@ -58,26 +62,28 @@ MessageType = _enum(CON=0, NON=1, ACK=2, RST=3)
 '''Message type enum -- CON, etc.'''
 
 CodeClass = _enum(Request=0, Success=2, ClientError=4, ServerError=5)
-'''Message code class enum -- Request, etc.'''
+'''Enum for class part of message code -- a Request (0), or a response, like Success (2).'''
 
 RequestCode = _enum(GET=1, POST=2, PUT=3, DELETE=4)
-'''Message code detail enum for requests (Class 0) -- GET, etc.'''
+'''Enum for detail part of message code for requests (Class 0) -- GET, etc.'''
 
-ResponseCode2 = _enum(Created=1, Deleted=2, Valid=3, Changed=4, Content=5)
-'''Message code detail enum for Class 2 responses -- Created, etc.'''
+SuccessResponseCode = _enum(Created=1, Deleted=2, Valid=3, Changed=4, Content=5)
+'''Enum for detail part of message code for success responses (Class 2) -- Created 
+(1 in 2.01), etc.'''
 
-ResponseCode4 = _enum(BadRequest=0, Unauthorized=1, BadOption=2, Forbidden=3,
+ClientResponseCode = _enum(BadRequest=0, Unauthorized=1, BadOption=2, Forbidden=3,
                       NotFound=4, MethodNotAllowed=5, NotAcceptable=6, PreconditionFailed=12,
                       RequestEntityTooLarge=13, UnsupportedContentFormat=15)
-'''Message code detail enum for Class 4 responses -- BadRequest, etc.'''
+'''Enum for detail part of message code for client error responses (Class 4) -- 
+BadRequest (0 in 4.00), etc.'''
 
-ResponseCode5 = _enum(InternalServerError=0, NotImplemented=1, BadGateway=2, 
+ServerResponseCode = _enum(InternalServerError=0, NotImplemented=1, BadGateway=2, 
                       ServiceUnavailable=3, GatewayTimeout=4, ProxyingNotSupported=5)
-'''Message code detail enum for Class 5 responses -- InternalServerError, etc.'''
+'''Enum for detail part of message code for server error responses (Class 5) -- 
+InternalServerError (0 in 5.00), etc.'''
     
 class OptionType(object):
-    '''
-    A type of CoAP Option as defined in section 5.4 of the spec. Provides metadata 
+    '''A type of CoAP Option as defined in section 5.4 of the spec. Provides metadata 
     about an option in a message.
     '''
     def __init__(self, number, name, repeatable, format, lengthRange, default):

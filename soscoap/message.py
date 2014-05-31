@@ -37,10 +37,13 @@ class CoapMessage(object):
     
     Attributes:
        :version:     int CoAP version
-       :messageType: int soscoap.MessageType enum value
+       :messageType: int :const:`soscoap.MessageType` enum value
        :tokenLength: int TKL value
-       :codeClass:   int soscoap.CodeClass enum value 
-       :codeDetail:  int soscoap.RequestCode or soscoap.ResponseCode[245]
+       :codeClass:   int :const:`soscoap.CodeClass` enum value 
+       :codeDetail:  int Enum value for :const:`soscoap.RequestCode`; or response 
+                         code -- :const:`soscoap.SuccessResponseCode`, 
+                         :const:`soscoap.ClientResponseCode`,
+                         :const:`soscoap.ServerResponseCode`
        :messageId:   int Message ID
        :token:       str Token bytes, or None
        :options:     list CoapOption objects for this message
@@ -64,10 +67,14 @@ class CoapMessage(object):
                                 self.fullPath())
                                 
     def absolutePath(self):
+        '''Returns the full string path for the resource transferred in this message,
+        or None if not present.
+        '''
         relative = '/'.join([opt.value for opt in self.options if opt.isPathElement()])
-        return '/' + relative
+        return '/' + relative if relative else None
         
     def lastOptionNumber(self):
+        '''Returns the number of the last option in the options list.'''
         return self.options[-1].optionType.number if len(self.options) else 0
         
 #
@@ -112,8 +119,7 @@ def buildFrom(bytestr, addr=None):
     return msg
 
 def _readFixedBytes(msg, bytestr):
-    '''
-    Sets the CoapMessage attributes from the first four network bytes. Used to
+    '''Sets the CoapMessage attributes from the first four network bytes. Used to
     initially build the message.
     '''
     byte0 = ord(bytestr[0])
@@ -127,8 +133,7 @@ def _readFixedBytes(msg, bytestr):
     msg.messageId   = (ord(bytestr[2]) << 8) + ord(bytestr[3])
     
 def _readOption(msg, bytestr, pos):
-    '''
-    Reads the next option from the network bytes, and appends it to the options
+    '''Reads the next option from the network bytes, and appends it to the options
     for the provided CoapMessage. Used to initially build the message.
     
     :param pos: int Position of next byte in bytestr
