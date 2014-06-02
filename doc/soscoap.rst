@@ -12,10 +12,26 @@ soscoap.message module
     :undoc-members:
     :show-inheritance:
 
-soscoap.netsock module
+soscoap.msgsock module
 ----------------------
 
-.. automodule:: soscoap.netsock
+.. automodule:: soscoap.msgsock
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+soscoap.resource module
+-----------------------
+
+.. automodule:: soscoap.resource
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+soscoap.server module
+---------------------
+
+.. automodule:: soscoap.server
     :members:
     :undoc-members:
     :show-inheritance:

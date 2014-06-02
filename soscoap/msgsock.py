@@ -20,11 +20,16 @@ SOCKET_BUFSIZE = 1024
                 
 class MessageSocket(asyncore.dispatcher):
     '''Source for network CoAP messages. Implemented as a select/poll-based socket,
-    based on the the built-in asyncore module. A client registers for notification 
-    of message reception events.
+    based on the the built-in asyncore module. Listens on the CoAP port for the
+    loopback interface.
+    
+    Events:
+        Register a handler for an event via the 'registerFor<Event>' method.
+        
+        :Receive: Triggered with the received CoAP message
     
     Attributes:
-        :_receiveHook: EventHook Notifies of a message received
+        :_receiveHook: EventHook Triggered when message received
     '''
     def __init__(self):
         '''Binds the socket to the CoAP port; ready to read'''
@@ -46,7 +51,10 @@ class MessageSocket(asyncore.dispatcher):
             log.debug('Read from {0}; data (hex) {1}'.format(addr, hexstr))
             
         coapmsg = message.buildFrom(addr=addr, bytestr=data)
-        self._receiveHook.notify(coapmsg)
+        self._receiveHook.trigger(coapmsg)
+        
+    def send(self, message):
+        pass
 
     def writable(self):
         return False

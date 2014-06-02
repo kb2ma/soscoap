@@ -5,21 +5,36 @@
 # as published at the link below.
 # http://opensource.org/licenses/LGPL-3.0
 '''
-Provides a CoapMessage class, and functions to build an instance from a raw byte 
-array.
+Provides CoapMessage and CoapOption classes, and functions to build a message 
+from a raw byte array.
 '''
 import logging
 import soscoap as coap
-from   option import CoapOption
 
 log = logging.getLogger(__name__)
 
+class CoapOption(object):
+    '''A CoAP message option.
+    
+    Attributes:
+       :optionType: OptionType metadata
+       :value:      Application value parsed from bytestr if reading; or value
+                    to write if writing
+    '''
+    
+    def __init__(self, optionType, value=None):
+        self.optionType = optionType
+        self.value      = value
+            
+    def __str__(self):
+        return 'CoapOption( {0}, val: {1} )'.format(self.optionType.name, self.value)
+        
+    def isPathElement(self):
+        return self.optionType == coap.OptionType.UriPath
+
+
 class CoapMessage(object):
     '''Modifiable representation of a CoAP message.
-    
-    Init Params:
-       :useDefaults: Boolean to create a usable instance with default attributes 
-                     where possible.
     
     CoAP message format [1]_::
     
@@ -36,7 +51,7 @@ class CoapMessage(object):
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     
     Attributes:
-       :version:     int CoAP version
+       :version:     int CoAP version, defaults to 1
        :messageType: int :const:`soscoap.MessageType` enum value
        :tokenLength: int TKL value
        :codeClass:   int :const:`soscoap.CodeClass` enum value 
@@ -52,7 +67,7 @@ class CoapMessage(object):
     '''
     
     def __init__(self):
-        self.version     = 0
+        self.version     = 1
         self.messageType = None
         self.tokenLength = 0
         self.codeClass   = 0

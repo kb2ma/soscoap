@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 4
 
    soscoap
+   examples
 
 
 Indices and tables
