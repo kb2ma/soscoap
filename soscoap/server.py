@@ -50,7 +50,7 @@ class CoapServer(object):
             if message.codeDetail == RequestCode.GET:
                 log.debug('Handling resource GET request...')
                 # Get path and trigger resource event
-                resource = SosResource(message.absolutePath, message=message)
+                resource = SosResource(message.absolutePath(), message=message)
                 self._resourceGetHook.trigger(resource)
                 self._sendReply(resource)
     
@@ -58,12 +58,14 @@ class CoapServer(object):
         request = resource.message
         
         msg             = CoapMessage()
+        msg.address     = request.address
         msg.messageType = MessageType.ACK
         msg.tokenLength = request.tokenLength
         msg.codeClass   = CodeClass.Success
         msg.codeDetail  = SuccessResponseCode.Content
         msg.messageId   = request.messageId
         msg.token       = request.token
+        msg.payload     = resource.value
         
         self.socket.send(msg)
         

@@ -51,6 +51,7 @@ class CoapMessage(object):
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     
     Attributes:
+       :address:     address tuple 
        :version:     int CoAP version, defaults to 1
        :messageType: int :const:`soscoap.MessageType` enum value
        :tokenLength: int TKL value
@@ -66,7 +67,8 @@ class CoapMessage(object):
     .. [1] http://tools.ietf.org/html/draft-ietf-core-coap-18
     '''
     
-    def __init__(self):
+    def __init__(self, address=None):
+        self.address     = address
         self.version     = 1
         self.messageType = None
         self.tokenLength = 0
@@ -96,7 +98,7 @@ class CoapMessage(object):
 # Build functions
 #
 
-def buildFrom(bytestr, addr=None):
+def buildFrom(bytestr, address=None):
     '''Creates a CoapMessage from a raw byte source.
     
     :param addr:    IPv6 address 4-tuple
@@ -106,7 +108,7 @@ def buildFrom(bytestr, addr=None):
     if len(bytestr) < 4:
         raise RuntimeError(tooShortText)
         
-    msg = CoapMessage()
+    msg = CoapMessage(address)
     _readFixedBytes(msg, bytestr)
     pos = 4
     
@@ -132,6 +134,30 @@ def buildFrom(bytestr, addr=None):
             pos = _readOption(msg, bytestr, pos)
             
     return msg
+
+def serialize(message):
+    '''Returns a CoAP-formatted binary string for the provided message.
+    '''
+    # First four header bytes
+    msgBytes    = bytearray(4)
+    nextByte    = (message.version     & 0x3) << 6
+    nextByte   |= (message.messageType & 0x3) << 4
+    nextByte   |=  message.tokenLength & 0xF
+    msgBytes[0] = nextByte
+    
+    nextByte    = (message.codeClass  & 0x0E) << 5
+    nextByte   |=  message.codeDetail & 0x1F
+    msgBytes[1] = nextByte
+    
+    msgBytes[2] = (message.messageId & 0xFF00) >> 8
+    msgBytes[3] =  message.messageId & 0xFF
+    
+    # Payload
+    msgBytes.append(0xFF)
+    # Assumes payload is a string
+    msgBytes += message.payload
+    
+    return msgBytes
 
 def _readFixedBytes(msg, bytestr):
     '''Sets the CoapMessage attributes from the first four network bytes. Used to

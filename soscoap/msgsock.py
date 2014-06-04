@@ -9,10 +9,11 @@ Provides the MessageSocket class.
 '''
 import asyncore
 import logging
-import message
+import message as msgModule
 import socket
 import soscoap
 from   soscoap import event
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class MessageSocket(asyncore.dispatcher):
         :Receive: Triggered with the received CoAP message
     
     Attributes:
+        :_outgoing: List (queue) of messages ready to send
         :_receiveHook: EventHook Triggered when message received
     '''
     def __init__(self):
@@ -36,10 +38,11 @@ class MessageSocket(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self)
         
         self._receiveHook = event.EventHook()
+        self._outgoing    = []
 
         self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
         self.bind(('::1', soscoap.COAP_PORT))
-        log.info("MessageSocket ready")
+        log.info('MessageSocket ready')
         
     def registerForReceive(self, handler):
         self._receiveHook.register(handler)
@@ -49,12 +52,30 @@ class MessageSocket(asyncore.dispatcher):
         if log.isEnabledFor(logging.DEBUG):
             hexstr = ' '.join(['{:02x}'.format(ord(b)) for b in data])
             log.debug('Read from {0}; data (hex) {1}'.format(addr, hexstr))
-            
-        coapmsg = message.buildFrom(addr=addr, bytestr=data)
-        self._receiveHook.trigger(coapmsg)
+          
+        # Top-level error handling when receive message
+        try:
+            coapmsg = msgModule.buildFrom(address=addr, bytestr=data)
+            self._receiveHook.trigger(coapmsg)
+        except:
+            log.exception('Can\'t handle socket read')
         
     def send(self, message):
-        pass
+        '''Puts the provided message on the outgoing queue for the next write
+        opportunity.
+        '''
+        self._outgoing.append(message)
+        log.debug('Added message to outgoing queue')
+        
+    def handle_write(self):
+        if self._outgoing:
+            # Top-level error handling when send message
+            try:
+                message = self._outgoing.pop(0)
+                log.info('Sending message')
+                self.socket.sendto(msgModule.serialize(message), message.address)
+            except:
+                log.exception('Can\'t handle socket send')
 
     def writable(self):
-        return False
+        return self._outgoing

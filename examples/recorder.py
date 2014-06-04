@@ -56,8 +56,10 @@ class ChannelRecorder(object):
     def _getResource(self, resource):
         '''Sets the value for the provided resource.
         '''
+        log.debug('Resource path is {0}'.format(resource.path))
         if resource.path == '/ver':
             resource.value = VERSION
+            log.debug('Set resource value for /ver')
             
     def start(self):
         '''Creates the server, and opens the file for this recorder.
