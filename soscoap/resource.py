@@ -13,19 +13,17 @@ import soscoap as coap
 log = logging.getLogger(__name__)
 
 class SosResource(object):
-    '''A RESTful application resource in CoAP messaging.
+    '''A RESTful application resource adapter for CoAP messaging. A resource is 
+    an attribute of a host.
     
     Attributes:
         :path:    str URI path for the resource
         :value:   object Representation of the resource suitable for messaging
-        :message: CoapMessage CoAP message relevant to the resource, for example
-                  the message requesting the resource
     '''
     
-    def __init__(self, path, value=None, message=None):
+    def __init__(self, path, value=None):
         self.path    = path
         self.value   = value
-        self.message = message
             
     def __str__(self):
         return 'SosResource( {0}, val: {1} )'.format(self.path, self.value)

@@ -17,20 +17,24 @@ class CoapOption(object):
     '''A CoAP message option.
     
     Attributes:
-       :optionType: OptionType metadata
-       :value:      Application value parsed from bytestr if reading; or value
-                    to write if writing
+       :type:   OptionType metadata
+       :value:  Application value parsed from bytestr if reading; or value
+                to write if writing
+       :length: int Length of value
     '''
     
-    def __init__(self, optionType, value=None):
-        self.optionType = optionType
-        self.value      = value
+    def __init__(self, optionType, value=None, length=0):
+        self.type   = optionType
+        self.value  = value
+        self.length = length
             
     def __str__(self):
-        return 'CoapOption( {0}, val: {1} )'.format(self.optionType.name, self.value)
+        return 'CoapOption( {0}, val: {1}, len: {2} )'.format(self.type.name, 
+                                                              self.value,
+                                                              self.length)
         
     def isPathElement(self):
-        return self.optionType == coap.OptionType.UriPath
+        return self.type == coap.OptionType.UriPath
 
 
 class CoapMessage(object):
@@ -63,6 +67,7 @@ class CoapMessage(object):
        :messageId:   int Message ID
        :token:       str Token bytes, or None
        :options:     list CoapOption objects for this message
+       :payload:     str Payload contents, or None
     
     .. [1] http://tools.ietf.org/html/draft-ietf-core-coap-18
     '''
@@ -77,6 +82,7 @@ class CoapMessage(object):
         self.messageId   = 0
         self.token       = None
         self.options     = []
+        self.payload     = None
             
     def __str__(self):
         return 'CoapMessage( t:{0} p:{1})'.format(
@@ -92,7 +98,7 @@ class CoapMessage(object):
         
     def lastOptionNumber(self):
         '''Returns the number of the last option in the options list.'''
-        return self.options[-1].optionType.number if len(self.options) else 0
+        return self.options[-1].type.number if len(self.options) else 0
         
 #
 # Build functions
@@ -135,27 +141,36 @@ def buildFrom(bytestr, address=None):
             
     return msg
 
-def serialize(message):
+def serialize(msg):
     '''Returns a CoAP-formatted binary string for the provided message.
     '''
     # First four header bytes
     msgBytes    = bytearray(4)
-    nextByte    = (message.version     & 0x3) << 6
-    nextByte   |= (message.messageType & 0x3) << 4
-    nextByte   |=  message.tokenLength & 0xF
+    nextByte    = (msg.version     & 0x3) << 6
+    nextByte   |= (msg.messageType & 0x3) << 4
+    nextByte   |=  msg.tokenLength & 0xF
     msgBytes[0] = nextByte
     
-    nextByte    = (message.codeClass  & 0x0E) << 5
-    nextByte   |=  message.codeDetail & 0x1F
+    nextByte    = (msg.codeClass  & 0x0E) << 5
+    nextByte   |=  msg.codeDetail & 0x1F
     msgBytes[1] = nextByte
     
-    msgBytes[2] = (message.messageId & 0xFF00) >> 8
-    msgBytes[3] =  message.messageId & 0xFF
+    msgBytes[2] = (msg.messageId & 0xFF00) >> 8
+    msgBytes[3] =  msg.messageId & 0xFF
+    
+    lastOptnum = 0   # supports encoding delta between option numbers
+    for option in msg.options:
+        headerByte  = ((option.type.number - lastOptnum) & 0xF) << 4
+        headerByte |= option.length
+        msgBytes.append(headerByte)
+        lastOptnum  = option.type.number
+        msgBytes.extend(option.value)
     
     # Payload
-    msgBytes.append(0xFF)
-    # Assumes payload is a string
-    msgBytes += message.payload
+    if msg.payload:
+        msgBytes.append(0xFF)
+        # Assumes payload is a string
+        msgBytes += msg.payload
     
     return msgBytes
 
@@ -192,7 +207,8 @@ def _readOption(msg, bytestr, pos):
     option     = CoapOption(optionType)
     
     if optionType == coap.OptionType.UriPath:
-        option.value = bytestr[bytepos : bytepos+optlen]
+        option.value  = bytestr[bytepos : bytepos+optlen]
+        option.length = optlen
     else:
         raise NotImplementedError('Option number {0} not implemented'.format(optnum))
     

@@ -22,8 +22,20 @@ def test_FixedBytes():
         
 # GET /ver
 verGetMsg = '\x40\x01\x6C\x29\xB3\x76\x65\x72'
+        
+def test_option():
+    '''Creates and queries a CoapOption'''
+    msg = message.CoapMessage()
+    assert len(msg.options) == 0
+    
+    option = message.CoapOption(coap.OptionType.ContentFormat, 0, 1)
+    assert option.type.number == 12
+    assert option.value       == 0
+    assert option.length      == 1
+    
 
 def test_simpleGet():
+    '''Read GET request from bytes, and reserialize'''
     msg = message.buildFrom(bytestr=verGetMsg)
     
     assert msg.version     == 1
@@ -38,3 +50,5 @@ def test_simpleGet():
     assert msg.options[0].value == 'ver'
     
     assert msg.absolutePath()  == '/ver'
+    
+    assert message.serialize(msg) == verGetMsg
