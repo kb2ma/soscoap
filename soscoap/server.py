@@ -36,9 +36,10 @@ class CoapServer(object):
         #. cs.registerForResourceGet() -- Register event handler
         #. cs.start() -- Starts to listen for requests
     '''
-    def __init__(self):
-        self.socket = MessageSocket()
-        self.socket.registerForReceive(self._handleMessage)
+    def __init__(self, messageSocket=None):
+        '''messageSocket argument is used only for unit testing.'''
+        self._socket = messageSocket if messageSocket else MessageSocket()
+        self._socket.registerForReceive(self._handleMessage)
         
         self._resourceGetHook = EventHook()
                 
@@ -69,7 +70,7 @@ class CoapServer(object):
         msg.token       = request.token
         msg.payload     = resource.value
         
-        self.socket.send(msg)
+        self._socket.send(msg)
         
     def start(self):
         log.info('Starting asyncore loop')

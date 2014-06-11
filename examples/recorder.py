@@ -78,7 +78,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     except:
-        log.error('Cannot start recorder: {0}'.format(sys.exc_info()))
+        log.exception('Catch-all handler for recorder')
     finally:
         recorder.close()
         log.info('Recorder closed')

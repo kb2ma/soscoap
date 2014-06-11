@@ -142,7 +142,7 @@ def buildFrom(bytestr, address=None):
     return msg
 
 def serialize(msg):
-    '''Returns a CoAP-formatted binary string for the provided message.
+    '''Returns a CoAP-formatted bytearray for the provided message.
     '''
     # First four header bytes
     msgBytes    = bytearray(4)

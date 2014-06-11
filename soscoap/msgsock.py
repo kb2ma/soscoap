@@ -35,7 +35,7 @@ class MessageSocket(asyncore.dispatcher):
     '''
     def __init__(self):
         '''Binds the socket to the CoAP port; ready to read'''
-        asyncore.dispatcher.__init__(self)
+        asyncore.dispatcher.__init__(self, map={})
         
         self._receiveHook = event.EventHook()
         self._outgoing    = []
@@ -48,17 +48,17 @@ class MessageSocket(asyncore.dispatcher):
         self._receiveHook.register(handler)
         
     def handle_read(self):
+        log.debug('self.socket is {0}'.format(self.socket))
+        log.debug('self.socket.recvfrom is {0}'.format(self.socket.recvfrom))
         data, addr = self.socket.recvfrom(SOCKET_BUFSIZE)
         if log.isEnabledFor(logging.DEBUG):
             hexstr = ' '.join(['{:02x}'.format(ord(b)) for b in data])
-            log.debug('Read from {0}; data (hex) {1}'.format(addr, hexstr))
+            log.debug('Receive from {0}; data (hex) {1}'.format(addr, hexstr))
+        else:
+            log.info('Receive message from {0}'.format(addr))
           
-        # Top-level error handling when receive message
-        try:
-            coapmsg = msgModule.buildFrom(address=addr, bytestr=data)
-            self._receiveHook.trigger(coapmsg)
-        except:
-            log.exception('Can\'t handle socket read')
+        coapmsg = msgModule.buildFrom(address=addr, bytestr=data)
+        self._receiveHook.trigger(coapmsg)
         
     def send(self, message):
         '''Puts the provided message on the outgoing queue for the next write
@@ -69,13 +69,26 @@ class MessageSocket(asyncore.dispatcher):
         
     def handle_write(self):
         if self._outgoing:
-            # Top-level error handling when send message
-            try:
-                message = self._outgoing.pop(0)
-                log.info('Sending message')
-                self.socket.sendto(msgModule.serialize(message), message.address)
-            except:
-                log.exception('Can\'t handle socket send')
+            message  = self._outgoing.pop(0)
+            msgArray = msgModule.serialize(message)
+            if log.isEnabledFor(logging.DEBUG):
+                hexstr = ' '.join(['{:02x}'.format(b) for b in msgArray])
+                log.debug('Send to {0}; data (hex) {1}'.format(message.address, hexstr))
+            else:
+                log.info('Send message to {0}'.format(message.address))
+                
+            self.socket.sendto(msgArray, message.address)
 
     def writable(self):
         return self._outgoing
+
+    def log_info(self, message, type='info'):
+        '''Override asyncore to output log messages to the logging module'''
+        if type == 'error':
+            level = logging.ERROR
+        elif type == 'warning':
+            level = logging.WARNING
+        else:
+            level = logging.INFO
+            
+        log.log(level, message)
