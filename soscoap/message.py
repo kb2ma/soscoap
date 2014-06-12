@@ -5,8 +5,8 @@
 # as published at the link below.
 # http://opensource.org/licenses/LGPL-3.0
 '''
-Provides CoapMessage and CoapOption classes, and functions to build a message 
-from a raw byte array.
+Provides CoapMessage and CoapOption classes. Provides functions to build a message 
+from a raw byte array, and to serialize the message back out bytes.
 '''
 import logging
 import soscoap as coap

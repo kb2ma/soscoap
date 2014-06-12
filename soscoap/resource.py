@@ -8,7 +8,6 @@
 Provides a resource class.
 '''
 import logging
-import soscoap as coap
 
 log = logging.getLogger(__name__)
 

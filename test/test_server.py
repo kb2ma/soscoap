@@ -10,7 +10,7 @@ from   flexmock import flexmock
 import logging
 import pytest
 import soscoap as coap
-from   soscoap import message
+from   soscoap import message as msgModule
 
 logging.basicConfig(filename='test.log', level=logging.DEBUG, 
                     format='%(asctime)s %(module)s %(message)s')
@@ -26,19 +26,19 @@ def getTestResource(resource):
 class MessageMatcher(object):
     '''For test_resource()'''
     def __eq__(self, target):
-        return isinstance(target, message.CoapMessage) \
+        return isinstance(target, msgModule.CoapMessage) \
                 and target.messageType == coap.MessageType.ACK \
                 and target.payload == '0.1'
 
 def test_resource():
     '''Tests use of a resource to handle an incoming CON GET request.'''
-    ssocket = flexmock(
+    mockSocket = flexmock(
         registerForReceive = lambda handler: None,
         create_socket      = lambda family,type: None,
         bind               = lambda addr: None)
-    flexmock(coap.msgsock).should_receive('MessageSocket').and_return(ssocket)
+    flexmock(coap.msgsock).should_receive('MessageSocket').and_return(mockSocket)
 
-    ssocket.should_receive('send').with_args(MessageMatcher())
+    mockSocket.should_receive('send').with_args(MessageMatcher())
 
     # Run
     # Must import server module here -- after definition of mock MessageSocket
@@ -46,6 +46,6 @@ def test_resource():
     server = srvModule.CoapServer()
     server.registerForResourceGet(getTestResource)
     
-    msg = message.buildFrom('\x40\x01\x6C\x29\xB3\x76\x65\x72', 
+    msg = msgModule.buildFrom('\x40\x01\x6C\x29\xB3\x76\x65\x72', 
                             address=('::1', 42683, 0, 0))
     server._handleMessage(msg)

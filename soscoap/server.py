@@ -8,16 +8,16 @@
 Provides an SOS CoapServer, the main SOS interface for a server-based CoAP 
 application.
 '''
-import logging
 import asyncore
 from   event import EventHook
+import logging
 from   message import CoapMessage
+from   msgsock import MessageSocket
+from   resource import SosResource
 from   soscoap import CodeClass
 from   soscoap import MessageType
 from   soscoap import RequestCode
 from   soscoap import SuccessResponseCode
-from   resource import SosResource
-from   msgsock import MessageSocket
 
 log = logging.getLogger(__name__)
 
@@ -34,11 +34,15 @@ class CoapServer(object):
     Usage:
         #. cs = CoapServer() -- Create instance
         #. cs.registerForResourceGet() -- Register event handler
-        #. cs.start() -- Starts to listen for requests
-    '''
+        #. cs.start() -- Start to listen for requests
+
+     Attributes:
+        :_msgSocket: MessageSocket to send/receive messages
+        :_resourceGetHook: EventHook triggered when GET resource requested
+   '''
     def __init__(self):
-        self._socket = MessageSocket()
-        self._socket.registerForReceive(self._handleMessage)
+        self._msgSocket = MessageSocket()
+        self._msgSocket.registerForReceive(self._handleMessage)
         
         self._resourceGetHook = EventHook()
                 
@@ -57,8 +61,8 @@ class CoapServer(object):
     def _sendReply(self, request, resource):
         '''Sends a reply with the content for the provided resource.
         
-        :param request: CoapMessage'''
-        
+        :param request: CoapMessage
+        '''
         msg             = CoapMessage()
         msg.address     = request.address
         msg.messageType = MessageType.ACK
@@ -69,7 +73,7 @@ class CoapServer(object):
         msg.token       = request.token
         msg.payload     = resource.value
         
-        self._socket.send(msg)
+        self._msgSocket.send(msg)
         
     def start(self):
         log.info('Starting asyncore loop')
