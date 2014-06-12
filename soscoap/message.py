@@ -87,7 +87,7 @@ class CoapMessage(object):
     def __str__(self):
         return 'CoapMessage( t:{0} p:{1})'.format(
                                 coap.MessageType._reverse[self.messageType],
-                                self.fullPath())
+                                self.absolutePath())
                                 
     def absolutePath(self):
         '''Returns the full string path for the resource transferred in this message,

@@ -36,9 +36,8 @@ class CoapServer(object):
         #. cs.registerForResourceGet() -- Register event handler
         #. cs.start() -- Starts to listen for requests
     '''
-    def __init__(self, messageSocket=None):
-        '''messageSocket argument is used only for unit testing.'''
-        self._socket = messageSocket if messageSocket else MessageSocket()
+    def __init__(self):
+        self._socket = MessageSocket()
         self._socket.registerForReceive(self._handleMessage)
         
         self._resourceGetHook = EventHook()

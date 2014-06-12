@@ -35,25 +35,22 @@ class MessageSocket(asyncore.dispatcher):
     '''
     def __init__(self):
         '''Binds the socket to the CoAP port; ready to read'''
-        asyncore.dispatcher.__init__(self, map={})
+        asyncore.dispatcher.__init__(self)
         
         self._receiveHook = event.EventHook()
         self._outgoing    = []
 
         self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
         self.bind(('::1', soscoap.COAP_PORT))
-        log.info('MessageSocket ready')
         
     def registerForReceive(self, handler):
         self._receiveHook.register(handler)
         
     def handle_read(self):
-        log.debug('self.socket is {0}'.format(self.socket))
-        log.debug('self.socket.recvfrom is {0}'.format(self.socket.recvfrom))
         data, addr = self.socket.recvfrom(SOCKET_BUFSIZE)
         if log.isEnabledFor(logging.DEBUG):
             hexstr = ' '.join(['{:02x}'.format(ord(b)) for b in data])
-            log.debug('Receive from {0}; data (hex) {1}'.format(addr, hexstr))
+            log.debug('Receive message from {0}; data (hex) {1}'.format(addr, hexstr))
         else:
             log.info('Receive message from {0}'.format(addr))
           
@@ -73,7 +70,7 @@ class MessageSocket(asyncore.dispatcher):
             msgArray = msgModule.serialize(message)
             if log.isEnabledFor(logging.DEBUG):
                 hexstr = ' '.join(['{:02x}'.format(b) for b in msgArray])
-                log.debug('Send to {0}; data (hex) {1}'.format(message.address, hexstr))
+                log.debug('Send message to {0}; data (hex) {1}'.format(message.address, hexstr))
             else:
                 log.info('Send message to {0}'.format(message.address))
                 
