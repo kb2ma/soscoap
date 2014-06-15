@@ -1,0 +1,11 @@
+#!/bin/sh
+# Runs all tests in this directory with the specified version of Python.
+# ./runtests [3|2]
+
+if [ -n $1 ] && [ "$1" = "2" ]; then
+	echo Testing on Python2
+	PYTHONPATH=.. py.test
+else
+	echo Testing on Python3
+	PYTHONPATH=.. py.test-3
+fi

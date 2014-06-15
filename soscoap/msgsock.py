@@ -9,10 +9,10 @@ Provides the MessageSocket class.
 '''
 import asyncore
 import logging
-import message as msgModule
+import soscoap.message as msgModule
 import socket
 import soscoap
-from   soscoap import event
+import soscoap.event as event
 import sys
 
 log = logging.getLogger(__name__)
@@ -49,7 +49,8 @@ class MessageSocket(asyncore.dispatcher):
     def handle_read(self):
         data, addr = self.socket.recvfrom(SOCKET_BUFSIZE)
         if log.isEnabledFor(logging.DEBUG):
-            hexstr = ' '.join(['{:02x}'.format(ord(b)) for b in data])
+            bytestr = bytearray(data) if sys.version_info.major == 2 else data
+            hexstr  = ' '.join(['{:02x}'.format(b) for b in bytestr])
             log.debug('Receive message from {0}; data (hex) {1}'.format(addr, hexstr))
         else:
             log.info('Receive message from {0}'.format(addr))

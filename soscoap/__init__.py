@@ -48,10 +48,10 @@ def _enum(**enums):
     try:
         reverseFunc = enums['_reverseFunc']
     except KeyError:
-        enums['_reverse'] = dict((value, key) for key, value in enums.iteritems())
+        enums['_reverse'] = dict((value, key) for key, value in enums.items())
     else:
         del enums['_reverseFunc']
-        enums['_reverse'] = dict((reverseFunc(value), value) for value in enums.itervalues())
+        enums['_reverse'] = dict((reverseFunc(value), value) for value in enums.values())
     
     return type('Enum', (), enums)
 

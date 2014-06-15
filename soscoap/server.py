@@ -9,15 +9,15 @@ Provides an SOS CoapServer, the main SOS interface for a server-based CoAP
 application.
 '''
 import asyncore
-from   event import EventHook
 import logging
-from   message import CoapMessage
-from   msgsock import MessageSocket
-from   resource import SosResource
 from   soscoap import CodeClass
 from   soscoap import MessageType
 from   soscoap import RequestCode
 from   soscoap import SuccessResponseCode
+from   soscoap.event import EventHook
+from   soscoap.message import CoapMessage
+from   soscoap.resource import SosResource
+from   soscoap.msgsock import MessageSocket
 
 log = logging.getLogger(__name__)
 
@@ -71,7 +71,9 @@ class CoapServer(object):
         msg.codeDetail  = SuccessResponseCode.Content
         msg.messageId   = request.messageId
         msg.token       = request.token
-        msg.payload     = resource.value
+        msg.payload     = bytearray(resource.value, 'latin1') \
+                                    if resource.type == 'string' \
+                                    else resource.value
         
         self._msgSocket.send(msg)
         

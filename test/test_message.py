@@ -17,12 +17,12 @@ log = logging.getLogger(__name__)
 
 def test_FixedBytes():
     with pytest.raises(RuntimeError) as errobj:
-        msgModule.buildFrom(bytestr='\x00\x00\x00')
+        msgModule.buildFrom(bytestr=b'\x00\x00\x00')
         assert errobj == 'fixedBytes attribute too short'
         
 # GET /ver
-verGetMsg = '\x40\x01\x6C\x29\xB3\x76\x65\x72'
-        
+verGetMsg = b'\x40\x01\x6C\x29\xB3\x76\x65\x72'
+
 def test_option():
     '''Creates and queries a CoapOption'''
     msg = msgModule.CoapMessage()
@@ -36,7 +36,7 @@ def test_option():
 
 def test_simpleGet():
     '''Read GET request from bytes, and reserialize'''
-    msg = msgModule.buildFrom(bytestr=verGetMsg)
+    msg = msgModule.buildFrom(verGetMsg)
     
     assert msg.version     == 1
     assert msg.messageType == coap.MessageType.CON

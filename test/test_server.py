@@ -36,6 +36,8 @@ def test_resource():
         registerForReceive = lambda handler: None,
         create_socket      = lambda family,type: None,
         bind               = lambda addr: None)
+    # MessageSocket's superclass, asyncore.dispatcher, is an old-style class,
+    # so cannot use 'new_instances' to create mock.
     flexmock(coap.msgsock).should_receive('MessageSocket').and_return(mockSocket)
 
     mockSocket.should_receive('send').with_args(MessageMatcher())
@@ -46,6 +48,6 @@ def test_resource():
     server = srvModule.CoapServer()
     server.registerForResourceGet(getTestResource)
     
-    msg = msgModule.buildFrom('\x40\x01\x6C\x29\xB3\x76\x65\x72', 
-                            address=('::1', 42683, 0, 0))
+    msg = msgModule.buildFrom(b'\x40\x01\x6C\x29\xB3\x76\x65\x72', 
+                              address=('::1', 42683, 0, 0))
     server._handleMessage(msg)

@@ -10,6 +10,7 @@ from a raw byte array, and to serialize the message back out bytes.
 '''
 import logging
 import soscoap as coap
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -18,8 +19,10 @@ class CoapOption(object):
     
     Attributes:
        :type:   OptionType metadata
-       :value:  Application value parsed from bytestr if reading; or value
-                to write if writing
+       :value:  str or bytes/bytearray - Application value read from a network
+                message; or the value to write into a network message. Stored 
+                as a plain str if the type stores a string; otherwise stored as 
+                bytes/bytearray.
        :length: int Length of value
     '''
     
@@ -65,9 +68,9 @@ class CoapMessage(object):
                          :const:`soscoap.ClientResponseCode`,
                          :const:`soscoap.ServerResponseCode`
        :messageId:   int Message ID
-       :token:       str Token bytes, or None
+       :token:       bytes/bytearray Token bytes, or None
        :options:     list CoapOption objects for this message
-       :payload:     str Payload contents, or None
+       :payload:     bytes/bytearray Payload contents, or None
     
     .. [1] http://tools.ietf.org/html/draft-ietf-core-coap-18
     '''
@@ -96,6 +99,16 @@ class CoapMessage(object):
         relative = '/'.join([opt.value for opt in self.options if opt.isPathElement()])
         return '/' + relative if relative else None
         
+    def payloadStr(self, text):
+        '''Sets the payload decoded from the provided (encoded) string, into a 
+        bytearray.
+        '''
+        self.payload = bytearray(text, 'latin1')
+        
+    def strPayload(self):
+        '''Returns the payload encoded as a str.'''
+        return str(self.payload, encoding='latin1')
+        
     def lastOptionNumber(self):
         '''Returns the number of the last option in the options list.'''
         return self.options[-1].type.number if len(self.options) else 0
@@ -107,37 +120,38 @@ class CoapMessage(object):
 def buildFrom(bytestr, address=None):
     '''Creates a CoapMessage from a raw byte source.
     
-    :param addr:    IPv6 address 4-tuple
-    :param bytestr: Raw bytes comprising the message
+    :param bytestr: str Bytes comprising the message
+    :param addr:    4-tuple IPv6 address
     '''
     tooShortText = 'source byte string too short'
     if len(bytestr) < 4:
         raise RuntimeError(tooShortText)
         
-    msg = CoapMessage(address)
-    _readFixedBytes(msg, bytestr)
+    msg     = CoapMessage(address)
+    # Ensure we have a string of ordinals (Python3 bytes) for consistency
+    msgords = bytearray(bytestr) if sys.version_info.major == 2 else bytestr
+    _readFixedBytes(msg, msgords)
     pos = 4
     
-    # read token
+    # Read token
     if msg.tokenLength:
-        if len(bytestr) < pos + msg.tokenLength:
+        if len(msgords) < pos + msg.tokenLength:
             raise RuntimeError(tooShortText)
-        msg.token = bytestr[pos : pos+msg.tokenLength]
+        msg.token = msgords[pos : pos+msg.tokenLength]
         pos      += msg.tokenLength
     else:
         msg.token = None
         
-    # read options and payload
-    while pos < len(bytestr):
-        if ord(bytestr[pos]) == 0xFF:
-            if pos <= len(bytestr):
-                # store payload
-                pass
+    # Read options and payload
+    while pos < len(msgords):
+        if msgords[pos] == 0xFF:
+            pos += 1
+            if pos < len(msgords):
+                msg.payload = msgords[pos : len(msgords)]
             else:
-                # error if no options; expect payload after payload marker
-                pass
+                raise NotImplementedError('Must generate a message format error')
         else:
-            pos = _readOption(msg, bytestr, pos)
+            pos = _readOption(msg, msgords, pos)
             
     return msg
 
@@ -160,46 +174,53 @@ def serialize(msg):
     
     lastOptnum = 0   # supports encoding delta between option numbers
     for option in msg.options:
-        headerByte  = ((option.type.number - lastOptnum) & 0xF) << 4
+        delta = option.type.number - lastOptnum
+        if (delta > 12):
+            raise NotImplementedError('Option delta greater than 12')
+        
+        headerByte  = (delta & 0xF) << 4
         headerByte |= option.length
         msgBytes.append(headerByte)
         lastOptnum  = option.type.number
-        msgBytes.extend(option.value)
+        log.debug('option.value type is {0}'.format(type(option.value)))
+        if option.type.valueFormat == 'string':
+            msgBytes.extend(bytearray(option.value, 'latin1'))
+        else:
+            msgBytes.extend(option.value)
     
-    # Payload
     if msg.payload:
         msgBytes.append(0xFF)
-        # Assumes payload is a string
-        msgBytes += msg.payload
+        msgBytes.extend(msg.payload)
     
     return msgBytes
 
-def _readFixedBytes(msg, bytestr):
-    '''Sets the CoapMessage attributes from the first four network bytes. Used to
-    initially build the message.
+def _readFixedBytes(msg, ords):
+    '''Sets the CoapMessage attributes from the first four network bytes as ordinals.
+    Used to initially build the message.
     '''
-    byte0 = ord(bytestr[0])
-    byte1 = ord(bytestr[1])
+    msg.version     = (ords[0] & 0xC0) >> 6
+    msg.messageType = (ords[0] & 0x30) >> 4
+    msg.tokenLength = (ords[0] & 0x0F)
+    msg.codeClass   = (ords[1] & 0xE0) >> 5
+    msg.codeDetail  = (ords[1] & 0x1F)
+    msg.messageId   = (ords[2] << 8) + ords[3]
     
-    msg.version     = (byte0 & 0xC0) >> 6
-    msg.messageType = (byte0 & 0x30) >> 4
-    msg.tokenLength = (byte0 & 0x0F)
-    msg.codeClass   = (byte1 & 0xE0) >> 5
-    msg.codeDetail  = (byte1 & 0x1F)
-    msg.messageId   = (ord(bytestr[2]) << 8) + ord(bytestr[3])
+def _readOption(msg, ords, pos):
+    '''Reads the next option from the network bytes as ordinals, and appends it 
+    to the options for the provided CoapMessage. Used to initially build the message.
     
-def _readOption(msg, bytestr, pos):
-    '''Reads the next option from the network bytes, and appends it to the options
-    for the provided CoapMessage. Used to initially build the message.
-    
-    :param pos: int Position of next byte in bytestr
+    :param pos: int Position of next byte in ords
     :return:    int Position of next byte after this option; may be past the end
                     of bytestr
     '''
-    byte0 = ord(bytestr[pos])
-    
-    delta   = (byte0 & 0xF0) >> 4
-    optlen  = (byte0 & 0x0F)
+    delta = (ords[pos] & 0xF0) >> 4
+    if (delta > 12):
+        if (delta == 15):   # 0xF
+            raise NotImplementedError(
+                        'Message format error: Delta 15 but not payload marker')
+        else:
+            raise NotImplementedError('Option delta of 13 or 14')
+    optlen  = ords[pos] & 0x0F
     optnum  = msg.lastOptionNumber() + delta
     bytepos = pos + 1 
     
@@ -207,8 +228,11 @@ def _readOption(msg, bytestr, pos):
     option     = CoapOption(optionType)
     
     if optionType == coap.OptionType.UriPath:
-        option.value  = bytestr[bytepos : bytepos+optlen]
         option.length = optlen
+        option.value  = ords[bytepos : bytepos+optlen]
+        if optionType.valueFormat == 'string':
+            option.value = str(option.value) if sys.version_info.major == 2 \
+                                             else str(option.value, 'latin1')
     else:
         raise NotImplementedError('Option number {0} not implemented'.format(optnum))
     

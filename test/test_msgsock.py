@@ -12,8 +12,8 @@ import logging
 import pytest
 import socket
 import soscoap as coap
-from   soscoap import msgsock
-from   soscoap import message as msgModule
+import soscoap.message as msgModule
+import soscoap.msgsock as msgsock
 
 logging.basicConfig(filename='test.log', level=logging.DEBUG, 
                     format='%(asctime)s %(module)s %(message)s')
@@ -48,7 +48,7 @@ def receiveTestReader(msg):
 def test_receive():
     (createStubSocket()
         .should_receive('recvfrom')
-        .and_return( ('\x40\x01\x6C\x29\xB3\x76\x65\x72', ('::1', 42683, 0, 0)) ))
+        .and_return( (b'\x40\x01\x6C\x29\xB3\x76\x65\x72', ('::1', 42683, 0, 0)) ))
     
     msgSocket = msgsock.MessageSocket()
     msgSocket.registerForReceive(receiveTestReader)
@@ -77,7 +77,7 @@ def test_send():
     msg.codeDetail  = coap.SuccessResponseCode.Content
     msg.messageId   = 0
     msg.token       = 0
-    msg.payload     = '0.1'
+    msg.payloadStr('0.1')
 
     msgSocket.send(msg)
     # Cannot use the lower level asyncore.write(). It wraps an empty except handler, 

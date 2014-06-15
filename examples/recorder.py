@@ -11,6 +11,7 @@ an example use of an SOS CoAP server.
 Start the recorder on POSIX with:
    ``$PYTHONPATH=.. ./recorder.py``
 '''
+from   __future__ import print_function
 import logging
 import asyncore
 import sys
@@ -58,6 +59,7 @@ class ChannelRecorder(object):
         '''
         log.debug('Resource path is {0}'.format(resource.path))
         if resource.path == '/ver':
+            resource.type  = 'string'
             resource.value = VERSION
             log.debug('Set resource value for /ver')
             
@@ -73,7 +75,7 @@ class ChannelRecorder(object):
 if __name__ == '__main__':
     try:
         recorder = ChannelRecorder('/chan/example', 'example.txt')
-        print 'Sock it to me!'
+        print('Sock it to me!')
         recorder.start()
     except KeyboardInterrupt:
         pass
