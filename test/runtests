@@ -4,8 +4,8 @@
 
 if [ -n $1 ] && [ "$1" = "2" ]; then
 	echo Testing on Python2
-	PYTHONPATH=.. py.test
+	PYTHONPATH=.. py.test -s
 else
 	echo Testing on Python3
-	PYTHONPATH=.. py.test-3
+	PYTHONPATH=.. py.test-3 -s
 fi

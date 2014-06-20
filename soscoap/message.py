@@ -103,11 +103,12 @@ class CoapMessage(object):
         '''Sets the payload decoded from the provided (encoded) string, into a 
         bytearray.
         '''
-        self.payload = bytearray(text, 'latin1')
+        self.payload = bytearray(text, coap.BYTESTR_ENCODING)
         
     def strPayload(self):
         '''Returns the payload encoded as a str.'''
-        return str(self.payload, encoding='latin1')
+        return str(self.payload) if sys.version_info.major == 2 \
+          else str(self.payload, encoding=coap.BYTESTR_ENCODING)
         
     def lastOptionNumber(self):
         '''Returns the number of the last option in the options list.'''
@@ -148,6 +149,7 @@ def buildFrom(bytestr, address=None):
             pos += 1
             if pos < len(msgords):
                 msg.payload = msgords[pos : len(msgords)]
+                pos         = len(msgords)
             else:
                 raise NotImplementedError('Must generate a message format error')
         else:
@@ -184,7 +186,7 @@ def serialize(msg):
         lastOptnum  = option.type.number
         log.debug('option.value type is {0}'.format(type(option.value)))
         if option.type.valueFormat == 'string':
-            msgBytes.extend(bytearray(option.value, 'latin1'))
+            msgBytes.extend(bytearray(option.value, coap.BYTESTR_ENCODING))
         else:
             msgBytes.extend(option.value)
     
@@ -232,7 +234,19 @@ def _readOption(msg, ords, pos):
         option.value  = ords[bytepos : bytepos+optlen]
         if optionType.valueFormat == 'string':
             option.value = str(option.value) if sys.version_info.major == 2 \
-                                             else str(option.value, 'latin1')
+                                             else str(option.value, coap.BYTESTR_ENCODING)
+        else:
+            raise NotImplementedError('Option value is not a string')
+                
+    elif optionType == coap.OptionType.MaxAge:
+        # TODO: Must add code to enforce this request
+        option.length = optlen
+        if optionType.valueFormat == 'uint':
+            option.value = reduce(lambda sum, elem: (sum << 8) + elem, 
+                                  ords[bytepos : bytepos+optlen])
+        else:
+            raise NotImplementedError('Option value is not a uint')
+        
     else:
         raise NotImplementedError('Option number {0} not implemented'.format(optnum))
     

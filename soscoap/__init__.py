@@ -58,6 +58,9 @@ def _enum(**enums):
 
 COAP_PORT = 5683
 
+BYTESTR_ENCODING = 'latin1'
+'''Used to convert a Python3 str resource to a byte sequence'''
+
 MessageType = _enum(CON=0, NON=1, ACK=2, RST=3)
 '''Message type enum -- CON, etc.'''
 
