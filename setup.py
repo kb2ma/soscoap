@@ -1,15 +1,17 @@
 from   setuptools import setup
 from   setuptools.command.test import test as TestCommand
 import sys
+'''Standard Python setup script'''
 
 # To read __version__
 version = {}
 with open("./soscoap/version.py") as fp:
     exec(fp.read(), version)
 
-# Allows running unit tests prior to installation with:
-#    $ python setup.py test
 class PyTest(TestCommand):
+    '''Allows running unit tests prior to installation with:
+          $ python setup.py test
+    '''
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []

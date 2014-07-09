@@ -7,3 +7,4 @@
 
 # OK
 echo -n "2014,125" |./coap-client -m put -N -f - -B 5 -v 10 coap://[::1]/ping
+echo -n "2014,125" |./coap-client -m post -N -f - -B 5 -v 10 coap://[::1]/ping

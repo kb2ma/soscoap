@@ -81,3 +81,34 @@ def test_putResource():
     msg = msgModule.buildFrom(b'\x50\x03\x03\x17\xb4\x70\x69\x6e\x67\xff\x32\x30\x31\x34\x2c\x31\x32\x35', 
                               address=('::1', 42683, 0, 0))
     server._handleMessage(msg)
+
+# POST resources and test
+
+def postTestResource(resource):
+    '''Callback for server ResourcePost event.'''
+    assert resource.path == '/ping'
+
+class PostMessageMatcher(object):
+    '''For test_resource()'''
+    def __eq__(self, target):
+        return isinstance(target, msgModule.CoapMessage) \
+                and target.messageType == coap.MessageType.NON
+
+def test_postResource():
+    '''Tests handling an incoming NON POST request.'''
+    mockMsgSocket = flexmock(
+        registerForReceive = lambda handler: None,
+        create_socket      = lambda family,type: None,
+        bind               = lambda addr: None)
+
+    mockMsgSocket.should_receive('send').with_args(PostMessageMatcher()).times(1)
+    
+    # Run
+    # Must import server module here -- after definition of mock MessageSocket
+    from soscoap import server as srvModule
+    server = srvModule.CoapServer(mockMsgSocket)
+    server.registerForResourcePost(postTestResource)
+    
+    msg = msgModule.buildFrom(b'\x50\x02\xd0\x07\xb4\x70\x69\x6e\x67\xff\x32\x30\x31\x34\x2c\x31\x32\x35', 
+                              address=('::1', 42683, 0, 0))
+    server._handleMessage(msg)

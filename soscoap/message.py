@@ -132,6 +132,7 @@ def buildFrom(bytestr, address=None):
     # Ensure we have a string of ordinals (Python3 bytes) for consistency
     msgords = bytearray(bytestr) if sys.version_info.major == 2 else bytestr
     _readFixedBytes(msg, msgords)
+    log.debug('Building message for ID {0}'.format(msg.messageId))
     pos = 4
     
     # Read token

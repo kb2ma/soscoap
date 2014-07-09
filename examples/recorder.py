@@ -10,6 +10,10 @@ an example use of an SOS CoAP server.
 
 Start the recorder on POSIX with:
    ``$PYTHONPATH=.. ./recorder.py``
+        
+URIs:
+    /ver  -- GET program version
+    /ping -- PUT/POST to file, ping.txt
 '''
 from   __future__ import print_function
 import logging
@@ -37,17 +41,24 @@ class ValueRecorder(object):
         :_server:   CoapServer Provides CoAP message protocol
     
     Usage:
-        #. cr = ValueRecorder()  -- Create instance
+        #. cr = ValueRecorder(uripath, filename)  -- Create instance
         #. cr.start()  -- Starts to listen and record messages
         #. cr.close()  -- Releases sytem resources
+        
+    URIs:
+        /ver -- GET program version
+        /<uripath-attribute> -- PUT/POST to <filename-attribute> file
     '''
     def __init__(self, uripath, filename):
-        self.uripath  = uripath
-        self.filename = filename
+        self.uripath   = uripath
+        self.filename  = filename
+        # Must be defined for use by close().
+        self._chanfile = None
         
-        self._server   = CoapServer()
+        self._server = CoapServer()
         self._server.registerForResourceGet(self._getResource)
         self._server.registerForResourcePut(self._putResource)
+        self._server.registerForResourcePost(self._postResource)
         
     def close(self):
         '''Releases system resources.
@@ -56,7 +67,7 @@ class ValueRecorder(object):
             self._chanfile.close() 
                 
     def _getResource(self, resource):
-        '''Sets the value for the provided resource, for a Get request.
+        '''Sets the value for the provided resource, for a GET request.
         '''
         log.debug('Resource path is {0}'.format(resource.path))
         if resource.path == '/ver':
@@ -66,18 +77,33 @@ class ValueRecorder(object):
         else:
             log.debug('Unknown path')
     
-    def _putResource(self, resource):
-        '''Records the value for the provided resource, for a Put request.
+    def _postResource(self, resource):
+        '''Records the value for the provided resource, for a POST request.
         
         :param resource.value: str ASCII in CSV format, with two fields:
                                1. int Time
                                2. int Value
         '''
         log.debug('Resource path is {0}'.format(resource.path))
-        if resource.path == '/ping':
+        if resource.path == self.uripath:
             self._chanfile.writelines((resource.value, '\n'))
             self._chanfile.flush()
-            log.debug('Put resource value done')
+            log.debug('POST resource value done')
+        else:
+            raise NotImplementedError('Unknown path')
+    
+    def _putResource(self, resource):
+        '''Records the value for the provided resource, for a PUT request.
+        
+        :param resource.value: str ASCII in CSV format, with two fields:
+                               1. int Time
+                               2. int Value
+        '''
+        log.debug('Resource path is {0}'.format(resource.path))
+        if resource.path == self.uripath:
+            self._chanfile.writelines((resource.value, '\n'))
+            self._chanfile.flush()
+            log.debug('PUT resource value done')
         else:
             raise NotImplementedError('Unknown path')
     
@@ -91,6 +117,8 @@ class ValueRecorder(object):
 
 # Start the recorder
 if __name__ == '__main__':
+    formattedPath = '\n\t'.join(str(p) for p in sys.path)
+    log.info('Running recorder with sys.path:\n\t{0}'.format(formattedPath))
     recorder = None
     try:
         recorder = ValueRecorder('/ping', 'ping.txt')
@@ -101,7 +129,7 @@ if __name__ == '__main__':
         pass
     except:
         log.exception('Catch-all handler for recorder')
-        print('\nKnocked out :-(\nSee log for exception.')
+        print('\nAborting; see log for exception.')
     finally:
         if recorder:
             recorder.close()
