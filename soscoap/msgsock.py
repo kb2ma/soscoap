@@ -41,7 +41,7 @@ class MessageSocket(asyncore.dispatcher):
         self._outgoing    = []
 
         self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
-        self.bind(('::1', soscoap.COAP_PORT))
+        self.bind(('', soscoap.COAP_PORT))
         
     def registerForReceive(self, handler):
         self._receiveHook.register(handler)

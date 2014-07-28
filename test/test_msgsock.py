@@ -36,7 +36,7 @@ def test_create_socket():
     sock = msgsock.MessageSocket()
     
     assert sock != None
-    assert sock.addr[0] == '::1'
+    assert sock.addr[0] == ''
     assert sock.addr[1] == 5683
     
 def receiveTestReader(msg):
