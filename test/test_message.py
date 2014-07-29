@@ -22,6 +22,8 @@ def test_FixedBytes():
         
 # CON GET /ver
 verGetMsg  = b'\x40\x01\x6C\x29\xB3\x76\x65\x72'
+# CON GET /ver, with token 0x66 (ascii 'f')
+tokenMsg   = b'\x41\x01\x6C\x29\x66\xB3\x76\x65\x72'
 # NON PUT /ping with 2014,125
 pingPutMsg = b'\x50\x03\x03\x17\xb4\x70\x69\x6e\x67\xff\x32\x30\x31\x34\x2c\x31\x32\x35'
 
@@ -53,6 +55,13 @@ def test_simpleGet():
     assert msg.absolutePath()  == '/ver'
     
     assert msgModule.serialize(msg) == verGetMsg
+    
+def test_token():
+    '''Read GET request from bytes, and reserialize'''
+    msg = msgModule.buildFrom(tokenMsg)
+    
+    assert msg.token == b'\x66'
+    assert msgModule.serialize(msg) == tokenMsg
     
 def test_simplePut():
     '''Read PUT request from bytes, and reserialize'''

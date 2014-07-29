@@ -139,6 +139,7 @@ def buildFrom(bytestr, address=None):
     if msg.tokenLength:
         if len(msgords) < pos + msg.tokenLength:
             raise RuntimeError(tooShortText)
+        # TODO Test for excessive token length
         msg.token = msgords[pos : pos+msg.tokenLength]
         pos      += msg.tokenLength
     else:
@@ -174,6 +175,9 @@ def serialize(msg):
     
     msgBytes[2] = (msg.messageId & 0xFF00) >> 8
     msgBytes[3] =  msg.messageId & 0xFF
+    
+    if msg.tokenLength:
+        msgBytes.extend(msg.token)
     
     lastOptnum = 0   # supports encoding delta between option numbers
     for option in msg.options:
@@ -230,7 +234,7 @@ def _readOption(msg, ords, pos):
     optionType = coap.OptionType._reverse[optnum]
     option     = CoapOption(optionType)
     
-    if optionType == coap.OptionType.UriPath:
+    if optionType == coap.OptionType.UriPath or optionType == coap.OptionType.UriHost:
         option.length = optlen
         option.value  = ords[bytepos : bytepos+optlen]
         if optionType.valueFormat == 'string':

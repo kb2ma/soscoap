@@ -14,6 +14,7 @@ from   soscoap import CodeClass
 from   soscoap import MessageType
 from   soscoap import RequestCode
 from   soscoap import SuccessResponseCode
+import soscoap
 from   soscoap.event import EventHook
 from   soscoap.message import CoapMessage
 from   soscoap.resource import SosResource
