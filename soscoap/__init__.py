@@ -119,3 +119,7 @@ OptionType = _enum(
 )
 '''OptionType enum -- If-Match, etc. Values are OptionType objects. Uses option 
    number for reverse lookup.'''
+
+MediaType = _enum(TextPlain=0, LinkFormat=40, Xml=41, OctetStream=42, Exi=47, 
+                  Json=50)
+'''Enum for CoAP Content-Formats registry.'''

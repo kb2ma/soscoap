@@ -8,6 +8,7 @@
 Provides CoapMessage and CoapOption classes. Provides functions to build a message 
 from a raw byte array, and to serialize the message back out bytes.
 '''
+import functools
 import logging
 import soscoap as coap
 import sys
@@ -71,6 +72,10 @@ class CoapMessage(object):
        :token:       bytes/bytearray Token bytes, or None
        :options:     list CoapOption objects for this message
        :payload:     bytes/bytearray Payload contents, or None
+       
+    Supported Option types:
+       :UriPath:
+       :ContentFormat:
     
     .. [1] http://tools.ietf.org/html/draft-ietf-core-coap-18
     '''
@@ -190,10 +195,13 @@ def serialize(msg):
         msgBytes.append(headerByte)
         lastOptnum  = option.type.number
         log.debug('option.value type is {0}'.format(type(option.value)))
-        if option.type.valueFormat == 'string':
-            msgBytes.extend(bytearray(option.value, coap.BYTESTR_ENCODING))
-        else:
-            msgBytes.extend(option.value)
+        if option.length > 0:
+            if option.type.valueFormat == 'string':
+                msgBytes.extend(bytearray(option.value, coap.BYTESTR_ENCODING))
+            elif option.type.valueFormat == 'uint':
+                msgBytes.append(option.value)
+            else:
+                raise NotImplementedError('Value format {0}'.format(option.type.valueFormat))
     
     if msg.payload:
         msgBytes.append(0xFF)
@@ -230,27 +238,35 @@ def _readOption(msg, ords, pos):
     optlen  = ords[pos] & 0x0F
     optnum  = msg.lastOptionNumber() + delta
     bytepos = pos + 1 
+    optval  = ords[bytepos : bytepos+optlen]
     
     optionType = coap.OptionType._reverse[optnum]
-    option     = CoapOption(optionType)
+    
+    option        = CoapOption(optionType)
+    option.length = optlen
     
     if optionType == coap.OptionType.UriPath or optionType == coap.OptionType.UriHost:
-        option.length = optlen
-        option.value  = ords[bytepos : bytepos+optlen]
         if optionType.valueFormat == 'string':
-            option.value = str(option.value) if sys.version_info.major == 2 \
-                                             else str(option.value, coap.BYTESTR_ENCODING)
+            option.value = _readOptionValue(optval, optionType.valueFormat)
         else:
-            raise NotImplementedError('Option value is not a string')
+            raise NotImplementedError('Option value must be string')
+                
+    elif optionType == coap.OptionType.ContentFormat:
+        if optionType.valueFormat == 'uint':
+            option.value = _readOptionValue(optval, optionType.valueFormat)
+            try:
+                coap.MediaType._reverse[option.value]
+            except KeyError:
+                log.warn('Content-Format undefined: {0}'.format(option.value))
+        else:
+            raise NotImplementedError('Option value must be uint')
                 
     elif optionType == coap.OptionType.MaxAge:
         # TODO: Must add code to enforce this request
-        option.length = optlen
         if optionType.valueFormat == 'uint':
-            option.value = reduce(lambda sum, elem: (sum << 8) + elem, 
-                                  ords[bytepos : bytepos+optlen])
+            option.value = _readOptionValue(optval, optionType.valueFormat)
         else:
-            raise NotImplementedError('Option value is not a uint')
+            raise NotImplementedError('Option value must be uint')
         
     else:
         raise NotImplementedError('Option number {0} not implemented'.format(optnum))
@@ -260,3 +276,13 @@ def _readOption(msg, ords, pos):
     log.debug('Found option {0} at pos {1}'.format(option, pos))
     
     return bytepos + optlen
+    
+def _readOptionValue(value, format):
+    if format == 'string':
+        return str(value) if sys.version_info.major == 2 \
+                           else str(value, coap.BYTESTR_ENCODING)
+    elif format == 'uint':
+        return functools.reduce(lambda sum, elem: (sum << 8) + elem, value, 0)
+        
+    else:
+        raise NotImplementedError('Option format {0} not implemented'.format(format))
