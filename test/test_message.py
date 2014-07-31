@@ -109,3 +109,15 @@ def test_binaryContentFormat():
     assert msg.payload == b'\x33'
 
     assert msgModule.serialize(msg) == binaryContentPutMsg
+    
+def test_PayloadFormat():
+    '''Reads payload based on Content-Format option'''
+    msg = msgModule.buildFrom(textContentPutMsg)
+    
+    assert len(msg.options)      == 2
+
+    optList = msg.findOption(coap.OptionType.ContentFormat)
+    assert len(optList) == 1
+    assert optList[0].type == coap.OptionType.ContentFormat
+
+    assert msg.typedPayload() == '2014,125'

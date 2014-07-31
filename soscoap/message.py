@@ -114,10 +114,33 @@ class CoapMessage(object):
         '''Returns the payload encoded as a str.'''
         return str(self.payload) if sys.version_info.major == 2 \
           else str(self.payload, encoding=coap.BYTESTR_ENCODING)
+          
+    def typedPayload(self):
+        '''Returns the payload encoded per the Content-Format option, or the raw
+        payload if no such option.
+        '''
+        cf = self.findOption(coap.OptionType.ContentFormat)
+        if cf:
+            if cf[0].value == coap.MediaType.TextPlain:
+                return self.strPayload()
+            elif cf[0].value == coap.MediaType.OctetStream:
+                return self.payload
+            else:
+                raise NotImplementedError('MediaType {0} not implemented'.format(cf.value))
+        else:
+            return self.payload
         
     def lastOptionNumber(self):
         '''Returns the number of the last option in the options list.'''
         return self.options[-1].type.number if len(self.options) else 0
+        
+    def findOption(self, optionType):
+        '''Returns the list of options for this message with the provided type, 
+        or an empty list if not found.
+        
+        :param optionType: soscoap.OptionType
+        '''
+        return [o for o in self.options if o.type == optionType]
         
 #
 # Build functions

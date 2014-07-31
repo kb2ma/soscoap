@@ -76,14 +76,14 @@ class CoapServer(object):
 
         elif message.codeDetail == RequestCode.PUT:
             log.debug('Handling resource PUT request...')
-            resource.value = message.strPayload()
+            resource.value = message.typedPayload()
             self._resourcePutHook.trigger(resource)
             # TODO: Must distinguish Created case from Changed case.
             self._sendPutReply(message, resource, SuccessResponseCode.Changed)
 
         elif message.codeDetail == RequestCode.POST:
             log.debug('Handling resource POST request...')
-            resource.value = message.strPayload()
+            resource.value = message.typedPayload()
             self._resourcePostHook.trigger(resource)
             # TODO: Must distinguish Created case from Changed case.
             self._sendPostReply(message, resource, SuccessResponseCode.Changed)
