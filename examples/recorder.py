@@ -12,8 +12,9 @@ Start the recorder on POSIX with:
    ``$PYTHONPATH=.. ./recorder.py``
         
 URIs:
-    /ver  -- GET program version
-    /ping -- PUT/POST to file, ping.txt
+    | /ver  -- GET program version
+    | /ping -- PUT/POST to file, ping.txt
+    
 '''
 from   __future__ import print_function
 import logging
@@ -46,8 +47,8 @@ class ValueRecorder(object):
         #. cr.close()  -- Releases sytem resources
         
     URIs:
-        /ver -- GET program version
-        /<uripath-attribute> -- PUT/POST to <filename-attribute> file
+        | /ver -- GET program version
+        | /<uripath-attribute> -- PUT/POST to <filename-attribute> file
     '''
     def __init__(self, uripath, filename):
         self.uripath   = uripath

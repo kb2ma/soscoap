@@ -77,7 +77,7 @@ class CoapMessage(object):
        :UriPath:
        :ContentFormat:
     
-    .. [1] http://tools.ietf.org/html/draft-ietf-core-coap-18
+    .. [1] http://datatracker.ietf.org/doc/rfc7252/
     '''
     
     def __init__(self, address=None):
