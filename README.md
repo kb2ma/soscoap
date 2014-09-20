@@ -29,7 +29,7 @@ Feature  | Comment
 -------- | -------
 Message type | Non-confirmable and confirmable
 Request code | GET, POST, PUT
-Options      | Uri-Path, Content-Format; does not support option delta or length > 12
+Options      | Uri-Path, Content-Format text, binary, JSON; does not support option delta or length > 12
 
 Authors
 =======

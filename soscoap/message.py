@@ -9,6 +9,7 @@ Provides CoapMessage and CoapOption classes. Provides functions to build a messa
 from a raw byte array, and to serialize the message back out bytes.
 '''
 import functools
+import json
 import logging
 import soscoap as coap
 import sys
@@ -111,13 +112,17 @@ class CoapMessage(object):
         self.payload = bytearray(text, coap.BYTESTR_ENCODING)
         
     def strPayload(self):
-        '''Returns the payload encoded as a str.'''
+        '''Returns the payload interpreted as a str.'''
         return str(self.payload) if sys.version_info.major == 2 \
           else str(self.payload, encoding=coap.BYTESTR_ENCODING)
+        
+    def jsonPayload(self):
+        '''Returns the payload interpreted as JSON data.'''
+        return json.loads(self.strPayload())
           
     def typedPayload(self):
-        '''Returns the payload encoded per the Content-Format option, or the raw
-        payload if no such option.
+        '''Returns the payload interpreted per the Content-Format option, or the 
+        raw payload if no such option.
         '''
         cf = self.findOption(coap.OptionType.ContentFormat)
         if cf:
@@ -125,6 +130,8 @@ class CoapMessage(object):
                 return self.strPayload()
             elif cf[0].value == coap.MediaType.OctetStream:
                 return self.payload
+            elif cf[0].value == coap.MediaType.Json:
+                return self.jsonPayload()
             else:
                 raise NotImplementedError('MediaType {0} not implemented'.format(cf.value))
         else:

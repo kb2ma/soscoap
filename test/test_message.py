@@ -28,8 +28,10 @@ tokenMsg   = b'\x41\x01\x6C\x29\x66\xB3\x76\x65\x72'
 pingPutMsg = b'\x50\x03\x03\x17\xb4\x70\x69\x6e\x67\xff\x32\x30\x31\x34\x2c\x31\x32\x35'
 # NON PUT /ping with 2014,125 with Content-Format text/plain
 textContentPutMsg = b'\x50\x03\x03\x17\xb4\x70\x69\x6e\x67\x10\xff\x32\x30\x31\x34\x2c\x31\x32\x35'
-# NON PUT /ping with 2014,125 with Content-Format text/plain
+# NON PUT /ping with 0x33 with Content-Format octet stream
 binaryContentPutMsg = b'\x50\x03\x03\x17\xb4\x70\x69\x6e\x67\x11\x2a\xff\x33'
+# NON POST /rss with Content-Format JSON
+jsonContentPostMsg = b'\x51\x02\xe9\xe8\x7b\xb3\x72\x73\x73\x11\x32\xff\x7b\x22\x76\x22\x3a\x2d\x36\x39\x7d'
 
 def test_option():
     '''Creates and queries a CoapOption'''
@@ -109,7 +111,22 @@ def test_binaryContentFormat():
     assert msg.payload == b'\x33'
 
     assert msgModule.serialize(msg) == binaryContentPutMsg
+        
+def test_jsonContentFormat():
+    '''Read JSON content format in POST request from bytes, and reserialize'''
+    msg = msgModule.buildFrom(jsonContentPostMsg)
     
+    assert len(msg.options)      == 2
+    assert msg.options[0].type   == coap.OptionType.UriPath
+    assert msg.options[1].type   == coap.OptionType.ContentFormat
+    assert msg.options[1].value  == coap.MediaType.Json
+    
+    payload = msg.jsonPayload()
+    assert 'v' in payload
+    assert payload['v'] == -69
+
+    assert msgModule.serialize(msg) == jsonContentPostMsg
+
 def test_PayloadFormat():
     '''Reads payload based on Content-Format option'''
     msg = msgModule.buildFrom(textContentPutMsg)
