@@ -22,7 +22,7 @@ import asyncore
 import sys
 from   soscoap  import MessageType
 from   soscoap  import RequestCode
-from   soscoap.resource import SosResource
+from   soscoap.resource import SosResourceTransfer
 from   soscoap.msgsock  import MessageSocket
 from   soscoap.server   import CoapServer
 

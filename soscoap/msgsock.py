@@ -21,8 +21,8 @@ SOCKET_BUFSIZE = 1024
                 
 class MessageSocket(asyncore.dispatcher):
     '''Source for network CoAP messages. Implemented as a select/poll-based socket,
-    based on the the built-in asyncore module. Listens on the CoAP port for the
-    loopback interface.
+    based on the the built-in asyncore module. Listens on the CoAP port for any
+    interface.
     
     Events:
         Register a handler for an event via the 'registerFor<Event>' method.

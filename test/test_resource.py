@@ -15,8 +15,8 @@ logging.basicConfig(filename='test.log', level=logging.DEBUG,
 log = logging.getLogger(__name__)
         
 def test_resource():
-    '''Creates and queries an SosResource'''
-    rsc       = rscModule.SosResource('/rsc/foo')
+    '''Creates and queries an SosResourceTransfer'''
+    rsc       = rscModule.SosResourceTransfer('/rsc/foo')
     rsc.value = 'bar'
 
     assert rsc.path == '/rsc/foo'

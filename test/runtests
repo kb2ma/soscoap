@@ -3,9 +3,14 @@
 # ./runtests [3|2]
 
 if [ -n $1 ] && [ "$1" = "2" ]; then
-	echo Testing on Python2
-	PYTHONPATH=.. py.test -s
+	if [ -n "`pip freeze 2>/dev/null |grep soscoap`" ]; then
+		echo "Must uninstall soscoap first (sys.path issue)"
+	else
+		echo Testing on Python2
+		PYTHONPATH=.. py.test -s
+	fi
 else
+	# Must uninstall here as with Python2?
 	echo Testing on Python3
 	PYTHONPATH=.. py.test-3 -s
 fi
