@@ -25,13 +25,12 @@ class CoapOption(object):
                 message; or the value to write into a network message. Stored 
                 as a plain str if the type stores a string; otherwise stored as 
                 bytes/bytearray.
-       :length: int Length of value
     '''
     
-    def __init__(self, optionType, value=None, length=0):
+    def __init__(self, optionType, value=None):
         self.type   = optionType
         self.value  = value
-        self.length = length
+        self.length = len(value) if value else 0
             
     def __str__(self):
         return 'CoapOption( {0}, val: {1}, len: {2} )'.format(self.type.name, 
