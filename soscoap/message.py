@@ -13,15 +13,34 @@ import json
 import logging
 import soscoap as coap
 import sys
+import numbers
 
 log = logging.getLogger(__name__)
+    
+def int2buf(intVal, length):
+    '''
+    Creates a buffer with the hex values that represent the provided integer.
+    
+    :param intVal:    [in] integer to convert
+    :param length:    [in] required buffer length
+    :return:         Big endian list of integer bytes
+    '''
+    buf = [0] * length
+    pos = length - 1
+    while intVal > 0:
+        if pos < 0:
+            raise IndexError('buffer too short ({0})'.format(length))
+        buf[pos] = intVal & 0xFF
+        intVal   = intVal >> 8
+        pos      = pos - 1
+    return buf
 
 class CoapOption(object):
     '''A CoAP message option.
     
     Attributes:
        :type:   OptionType metadata
-       :value:  str or bytes/bytearray - Application value read from a network
+       :value:  str, bytes/bytearray, or int - Application value read from a network
                 message; or the value to write into a network message. Stored 
                 as a plain str if the type stores a string; otherwise stored as 
                 bytes/bytearray.
@@ -30,7 +49,16 @@ class CoapOption(object):
     def __init__(self, optionType, value=None):
         self.type   = optionType
         self.value  = value
-        self.length = len(value) if value else 0
+
+        # Determine length
+        if isinstance(value, numbers.Integral):
+            self.length = 1
+            value       = value >> 8
+            while value > 0:
+                self.length = self.length + 1
+                value       = value >> 8
+        else:
+            self.length = len(value) if value else 0
             
     def __str__(self):
         return 'CoapOption( {0}, val: {1}, len: {2} )'.format(self.type.name, 
@@ -70,7 +98,8 @@ class CoapMessage(object):
                          :const:`soscoap.ServerResponseCode`
        :messageId:   int Message ID
        :token:       bytes/bytearray Token bytes, or None
-       :options:     list CoapOption objects for this message
+       :options:     list CoapOption objects for this message; must order by increasing
+                          option number
        :payload:     bytes/bytearray Payload contents, or None
        
     Supported Option types:
@@ -105,8 +134,8 @@ class CoapMessage(object):
         return '/' + relative if relative else None
         
     def payloadStr(self, text):
-        '''Sets the payload decoded from the provided (encoded) string, into a 
-        bytearray.
+        '''Sets the payload from the provided string, using the default string 
+        encoding.
         '''
         self.payload = bytearray(text, coap.BYTESTR_ENCODING)
         
@@ -228,7 +257,7 @@ def serialize(msg):
             if option.type.valueFormat == 'string':
                 msgBytes.extend(bytearray(option.value, coap.BYTESTR_ENCODING))
             elif option.type.valueFormat == 'uint':
-                msgBytes.append(option.value)
+                msgBytes.extend(bytearray(int2buf(option.value, option.length)))
             else:
                 raise NotImplementedError('Value format {0}'.format(option.type.valueFormat))
     

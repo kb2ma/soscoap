@@ -41,7 +41,7 @@ def test_option():
     option = msgModule.CoapOption(coap.OptionType.ContentFormat, 0)
     assert option.type.number == 12
     assert option.value       == 0
-    assert option.length      == 0
+    assert option.length      == 1
     
 def test_simpleGet():
     '''Read GET request from bytes, and reserialize'''

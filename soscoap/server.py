@@ -97,6 +97,7 @@ class CoapServer(object):
                 self._resourcePostHook.trigger(resource)
                 self._sendPostReply(message, resource)
         except:
+            log.exception('Error handling message; will send error reply')
             self._sendErrorReply(message, resource)
             
     def _createReplyTemplate(self, request, resource):
