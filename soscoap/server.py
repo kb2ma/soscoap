@@ -22,7 +22,7 @@ from   soscoap.event import EventHook
 from   soscoap.message import CoapMessage
 from   soscoap.message import CoapOption
 from   soscoap.resource import SosResourceTransfer
-from   soscoap.msgsock import MessageSocket
+from   soscoap.msgsock_openwsn import MessageSocket
 
 log = logging.getLogger(__name__)
 
