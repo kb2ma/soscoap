@@ -12,6 +12,7 @@ import asyncore
 import logging
 import random
 from   soscoap import CodeClass
+from   soscoap import MediaType
 from   soscoap import MessageType
 from   soscoap import OptionType
 from   soscoap import RequestCode
@@ -138,6 +139,11 @@ class CoapServer(object):
         msg.payload = bytearray(resource.value, soscoap.BYTESTR_ENCODING) \
                                     if resource.type == 'string' \
                                     else resource.value
+                                    
+        # Only add option for a string, and assume text-plain format.
+        if resource.type == 'string':
+            msg.addOption( CoapOption(OptionType.ContentFormat, MediaType.TextPlain) )
+            
         self._msgSocket.send(msg)
     
     def _sendPostReply(self, request, resource):
