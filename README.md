@@ -27,7 +27,7 @@ In early development; no tagged release yet.
 
 Feature  | Comment
 -------- | -------
-Message type | Non-confirmable and confirmable
+Message type | Non-confirmable
 Request code | GET, POST, PUT
 Options      | Uri-Path, Content-Format text, binary, JSON; does not support option delta or length > 12
 

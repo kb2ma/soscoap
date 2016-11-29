@@ -6,15 +6,10 @@
 # http://opensource.org/licenses/MPL-2.0
 '''
 Defines and runs a ValueRecorder for values received by a CoAP server. Provides
-an example use of an SOS CoAP server.
+an example use of an SOS CoAP server. See class documentation for URIs.
 
 Start the recorder on POSIX with:
    ``$PYTHONPATH=.. ./recorder.py``
-        
-URIs:
-    | /ver  -- GET program version
-    | /ping -- PUT/POST to file, ping.txt
-    
 '''
 from   __future__ import print_function
 import logging
@@ -48,7 +43,9 @@ class ValueRecorder(object):
         
     URIs:
         | /ver -- GET program version
-        | /<uripath-attribute> -- PUT/POST to <filename-attribute> file
+        | /<uripath-attribute> -- PUT/POST to <filename-attribute> file, where
+                                  the attribute names are provided to the class
+                                  constructor
     '''
     def __init__(self, uripath, filename):
         self.uripath   = uripath
