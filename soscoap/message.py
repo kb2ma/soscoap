@@ -52,7 +52,7 @@ class CoapOption(object):
 
         # Determine length
         if isinstance(value, numbers.Integral):
-            self.length = 1
+            self.length = 1 if value else 0
             value       = value >> 8
             while value > 0:
                 self.length = self.length + 1
@@ -98,7 +98,7 @@ class CoapMessage(object):
                          :const:`soscoap.ServerResponseCode`
        :messageId:   int Message ID
        :token:       bytes/bytearray Token bytes, or None
-       :options:     list CoapOption objects for this message; must order by increasing
+       :options:     list CoapOption objects for this message; ordered by increasing
                           option number
        :payload:     bytes/bytearray Payload contents, or None
        
@@ -176,6 +176,19 @@ class CoapMessage(object):
         :param optionType: soscoap.OptionType
         '''
         return [o for o in self.options if o.type == optionType]
+        
+    def addOption(self, option):
+        '''Adds an option to this message.
+        
+        :param option: soscoap.CoapOption the option to add
+        '''
+        # must insert in ascending option type order
+        for (i,o) in enumerate(self.options):
+            if o.optionType > option:
+                self.options[i:i] = option
+                break;
+        else:
+            self.options.append(option)
         
 #
 # Build functions
