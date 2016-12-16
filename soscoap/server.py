@@ -32,7 +32,8 @@ class CoapServer(object):
     registering event handlers.
     
     Events:
-        Register a handler for an event via the 'registerFor<Event>' method.
+        Register a handler for an event via the 'registerFor<Event>' method. A
+        handler may raise an IgnoreRequestException to silently ignore a request.
         
         :ResourceGet:  Server requests the value for the provided resource, to 
                        service a client GET request.
@@ -101,6 +102,9 @@ class CoapServer(object):
                 resource.value = message.typedPayload()
                 self._resourcePostHook.trigger(resource)
                 self._sendPostReply(message, resource)
+
+        except IgnoreRequestException:
+            log.info('Ignoring request')
         except:
             log.exception('Error handling message; will send error reply')
             self._sendErrorReply(message, resource)
@@ -199,3 +203,7 @@ class CoapServer(object):
         log.info('Starting asyncore loop')
         asyncore.loop()
 
+class IgnoreRequestException(Exception):
+    '''Identifies reception of a request the server would like to ignore.
+    '''
+    pass
