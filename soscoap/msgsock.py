@@ -32,16 +32,20 @@ class MessageSocket(asyncore.dispatcher):
     Attributes:
         :_outgoing: List (queue) of messages ready to send
         :_receiveHook: EventHook Triggered when message received
+
+    .. automethod:: soscoap.msgsock.MessageSocket.__init__
     '''
-    def __init__(self):
-        '''Binds the socket to the CoAP port; ready to read'''
+    def __init__(self, port=soscoap.COAP_PORT):
+        '''Binds the socket to a port; ready to read. Pass in port for
+        non-standard CoAP port.
+        '''
         asyncore.dispatcher.__init__(self)
         
         self._receiveHook = event.EventHook()
         self._outgoing    = []
 
         self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
-        self.bind(('', soscoap.COAP_PORT))
+        self.bind(('', port))
         
     def registerForReceive(self, handler):
         self._receiveHook.register(handler)

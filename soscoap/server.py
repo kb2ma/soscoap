@@ -52,10 +52,14 @@ class CoapServer(object):
         :_resourcePutHook:  EventHook triggered when PUT resource requested
         :_resourcePostHook: EventHook triggered when POST resource requested
         :_nextMessageId:    Next sequential value for a new Message ID
+
+    .. automethod:: soscoap.server.CoapServer.__init__
    '''
-    def __init__(self, msgSocket=None):
-        '''Pass in msgSocket only for unit testing'''
-        self._msgSocket = msgSocket if msgSocket else MessageSocket()
+    def __init__(self, msgSocket=None, port=soscoap.COAP_PORT):
+        '''Pass in msgSocket only for unit testing.
+        Pass in port for non-standard CoAP port.
+        '''
+        self._msgSocket = msgSocket if msgSocket else MessageSocket(port)
         self._msgSocket.registerForReceive(self._handleMessage)
         
         self._resourceGetHook  = EventHook()

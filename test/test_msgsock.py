@@ -39,6 +39,15 @@ def test_create_socket():
     assert sock.addr[0] == ''
     assert sock.addr[1] == 5683
     
+def test_custom_port():
+    createStubSocket()
+
+    sock = msgsock.MessageSocket(5682)
+    
+    assert sock != None
+    assert sock.addr[0] == ''
+    assert sock.addr[1] == 5682
+    
 def receiveTestReader(msg):
     '''Callback to verify test_receive() socket Receive event.'''
     assert msg.messageType == coap.MessageType.CON
