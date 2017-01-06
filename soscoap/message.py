@@ -107,9 +107,12 @@ class CoapMessage(object):
        :ContentFormat:
     
     .. [1] http://datatracker.ietf.org/doc/rfc7252/
+
+    .. automethod:: soscoap.message.CoapMessage.__init__
     '''
     
     def __init__(self, address=None):
+        '''Minimally initializes a message.'''
         self.address     = address
         self.version     = 1
         self.messageType = None
