@@ -5,8 +5,8 @@
 
 if [ -n $1 ] && [ "$1" = "2" ]; then
 	echo Recorder on Python2
-	PYTHONPATH=.. python recorder.py
+	PYTHONPATH=../.. python recorder.py
 else
 	echo Recorder on Python3
-	PYTHONPATH=.. python3 recorder.py
+	PYTHONPATH=../.. python3 recorder.py
 fi

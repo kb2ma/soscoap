@@ -9,7 +9,7 @@ Defines and runs a ValueRecorder for values received by a CoAP server. Provides
 an example use of an SOS CoAP server. See class documentation for URIs.
 
 Start the recorder on POSIX with:
-   ``$PYTHONPATH=.. ./recorder.py``
+   ``$PYTHONPATH=../.. ./recorder.py``
 '''
 from   __future__ import print_function
 import logging
