@@ -9,11 +9,11 @@ Defines and runs a StatsReader to query statistics from the RIOT gcoap example.
 Provides an example use of an SOS CoAP client.
 
 Options:
-
--a <hostAddr> -- Host address to query
--q <query>  ---- Name of query to run. Options:
-                   get -- Simple GET request
--s <port> ------ Source port from which to send query and listen for response
+   | -a <hostAddr> -- Host address to query
+   | -q <query>  -- Name of query to run. Options:
+   |                  get -- Simple GET request
+   | -s <port> -- Source port from which to send query and listen for
+   |              response
 
 Run the reader on POSIX with:
    ``$PYTHONPATH=../.. ./stats_reader.py -s 5682 -a bbbb::1 -q get``
@@ -39,6 +39,12 @@ VERSION = '0.1'
 
 class StatsReader(object):
     '''Reads statistics from a RIOT gcoap URL.
+
+    NB: As shown in the Usage section below, StatsReader starts the asyncore
+    loop before sending the query, like a server. This approach means the
+    query must be called via another thread. Another approach would be to use
+    asyncore's capabilities to create a single-use CoapClient and send the
+    query at startup, in the same thread.
     
     Attributes:
         :_hostAddr:  str Target for messages
@@ -46,8 +52,10 @@ class StatsReader(object):
     
     Usage:
         #. sr = StatsReader(sourcePort, hostAddr)  -- Create instance
-        #. sr.start() -- Sets timer to run the query
-        *. sr.close() -- Cleanup
+        #. sr.start() -- Starts asyncore networking loop
+        #. sr.query() -- Runs a named query. Must be called from a different
+                         thread, for example from a timer.
+        #. sr.close() -- Cleanup
     '''
     def __init__(self, sourcePort, hostAddr):
         self._hostAddr = hostAddr
@@ -88,7 +96,7 @@ if __name__ == '__main__':
         if reader:
             # Setup query here since start() call doesn't return until the
             # reader is terminated.
-            t = Timer(2, StatsReader.query, args=[ reader, options.query ])
+            t = Timer(2, StatsReader.query, args=(reader, options.query))
             t.start()
 
             print('Starting stats reader')

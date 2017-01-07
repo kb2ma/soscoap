@@ -20,7 +20,8 @@ import os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(1, os.path.abspath('../examples'))
+sys.path.insert(1, os.path.abspath('../examples/server'))
+sys.path.insert(2, os.path.abspath('../examples/client'))
 
 # -- General configuration ------------------------------------------------
 
@@ -269,7 +270,7 @@ texinfo_documents = [
 epub_title = u'soscoap'
 epub_author = u'Author'
 epub_publisher = u'Author'
-epub_copyright = u'2014-2016, Author'
+epub_copyright = u'2014-2017, Author'
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'soscoap'

@@ -1,5 +1,5 @@
-examples module
-===============
+server examples module
+======================
 
 
 Module contents

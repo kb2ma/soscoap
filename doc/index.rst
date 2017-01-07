@@ -12,7 +12,8 @@ Contents:
    :maxdepth: 4
 
    soscoap
-   examples
+   examples-server
+   examples-client
 
 
 Indices and tables
