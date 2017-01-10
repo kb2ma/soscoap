@@ -87,10 +87,11 @@ class CoapMessage(object):
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     
     Attributes:
-       :address:     address tuple 
+       :address:     address tuple Stored as an optional convenience for lower
+                     layers
        :version:     int CoAP version, defaults to 1
        :messageType: int :const:`soscoap.MessageType` enum value
-       :tokenLength: int TKL value
+       :tokenLength: int TKL value, defaults to 0
        :codeClass:   int :const:`soscoap.CodeClass` enum value 
        :codeDetail:  int Enum value for :const:`soscoap.RequestCode`; or response 
                          code -- :const:`soscoap.SuccessResponseCode`, 
@@ -187,8 +188,8 @@ class CoapMessage(object):
         '''
         # must insert in ascending option type order
         for (i,o) in enumerate(self.options):
-            if o.optionType > option:
-                self.options[i:i] = option
+            if o.type > option.type:
+                self.options.insert(i, option)
                 break;
         else:
             self.options.append(option)
