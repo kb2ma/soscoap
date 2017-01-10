@@ -11,6 +11,7 @@ application.
 import asyncore
 import logging
 import random
+import socket
 from   soscoap import CodeClass
 from   soscoap import MediaType
 from   soscoap import MessageType
@@ -44,11 +45,27 @@ class CoapClient(object):
 
     .. automethod:: soscoap.server.CoapClient.__init__
    '''
-    def __init__(self, msgSocket=None, port=soscoap.COAP_PORT):
-        '''Pass in msgSocket only for unit testing.
-        Pass in port for non-standard CoAP port.
+    def __init__(self, msgSocket=None, sourcePort=soscoap.COAP_PORT, dest=None):
+        '''Client initialization, espeically for networking.
+        
+        :param msgSocket: MessageSocket Pass in only for unit testing
+        :param sourcePort: int Port for source socket
+        :param dest: tuple 2-tuple (string,int) for destination host address
+                     and port
         '''
-        self._msgSocket = msgSocket if msgSocket else MessageSocket(port)
+        destTuple = None
+        if dest:
+            info = socket.getaddrinfo(dest[0], dest[1], socket.AF_INET6,
+                                                        socket.SOCK_DGRAM)
+            log.debug('getaddrinfo: {0}'.format(info))
+            # Assume we want the first 5-tuple entry returned
+            destTuple = info[0][4]
+
+        if msgSocket:
+            self._msgSocket = msgSocket
+        else:
+            self._msgSocket = MessageSocket(localPort=sourcePort, remote=destTuple)
+
         self._msgSocket.registerForReceive(self._handleMessage)
         
         # A random start is recommended in Sec. 4.4.
@@ -57,6 +74,10 @@ class CoapClient(object):
     def close(self):
         '''Releases system resources'''
         self._msgSocket.close()
+
+    def send(self, message):
+        '''Send a message'''
+        self._msgSocket.send(message)
         
     def _handleMessage(self, message):
         '''Accepts/reads response, and ignores a request'''
@@ -73,6 +94,7 @@ class CoapClient(object):
         return nextid
         
     def start(self):
-        '''Start networking.'''
+        '''Start networking, with a one second timeout so client doesn't wait
+        to send.'''
         log.info('Starting asyncore loop')
-        asyncore.loop()
+        asyncore.loop(1)

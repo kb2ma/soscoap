@@ -35,9 +35,12 @@ class MessageSocket(asyncore.dispatcher):
 
     .. automethod:: soscoap.msgsock.MessageSocket.__init__
     '''
-    def __init__(self, port=soscoap.COAP_PORT):
-        '''Binds the socket to a port; ready to read. Pass in port for
-        non-standard CoAP port.
+    def __init__(self, localPort=soscoap.COAP_PORT, remote=None):
+        '''Initializes socket: binds the socket to a port on this host,
+        ready to read. Also, optionally connects to an address for client use.
+        
+        :param localPort: int Port for source socket
+        :param remote: tuple AF_INET6 4-tuple for remote address
         '''
         asyncore.dispatcher.__init__(self)
         
@@ -45,7 +48,9 @@ class MessageSocket(asyncore.dispatcher):
         self._outgoing    = []
 
         self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
-        self.bind(('', port))
+        self.bind(('', localPort))
+        if remote:
+            self.connect(remote)
         
     def registerForReceive(self, handler):
         self._receiveHook.register(handler)

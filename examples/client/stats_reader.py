@@ -11,21 +11,27 @@ Provides an example use of an SOS CoAP client.
 Options:
    | -a <hostAddr> -- Host address to query
    | -q <query>  -- Name of query to run. Options:
-   |                  get -- Simple GET request
+   |                  core -- GET /.well-known/core
    | -s <port> -- Source port from which to send query and listen for
-   |              response
+   |              response. Valuable for the Observe mechanism, where the
+   |              server periodically sends responses.
 
 Run the reader on POSIX with:
-   ``$PYTHONPATH=../.. ./stats_reader.py -s 5682 -a bbbb::1 -q get``
+   ``$ PYTHONPATH=../.. ./stats_reader.py -s 5682 -a bbbb::1 -q core``
 '''
 from   __future__ import print_function
 import logging
 import asyncore
+import random
 import sys
+from   soscoap  import CodeClass
 from   soscoap  import MessageType
+from   soscoap  import OptionType
 from   soscoap  import RequestCode
 from   soscoap  import COAP_PORT
 from   soscoap.resource import SosResourceTransfer
+from   soscoap.message  import CoapMessage
+from   soscoap.message  import CoapOption
 from   soscoap.msgsock  import MessageSocket
 from   soscoap.client   import CoapClient
 from   threading import Timer
@@ -47,7 +53,7 @@ class StatsReader(object):
     query at startup, in the same thread.
     
     Attributes:
-        :_hostAddr:  str Target for messages
+        :_addrTuple:  tuple IPv6 address tuple for message destination
         :_client:   CoapClient Provides CoAP message protocol
     
     Usage:
@@ -57,9 +63,10 @@ class StatsReader(object):
                          thread, for example from a timer.
         #. sr.close() -- Cleanup
     '''
-    def __init__(self, sourcePort, hostAddr):
-        self._hostAddr = hostAddr
-        self._client   = CoapClient(port=sourcePort)
+    def __init__(self, hostAddr, hostPort, sourcePort):
+        '''Initializes on destination host and source port.'''
+        self._hostTuple = (hostAddr, hostPort)
+        self._client    = CoapClient(sourcePort=sourcePort, dest=self._hostTuple)
 
     def start(self):
         '''Starts networking; returns when networking is stopped.'''
@@ -68,8 +75,19 @@ class StatsReader(object):
     def query(self, queryName):
         '''Runs a named query'''
         # create message
+        msg             = CoapMessage(self._hostTuple)
+        msg.messageType = MessageType.NON
+        msg.codeClass   = CodeClass.Request
+        msg.codeDetail  = RequestCode.GET
+        msg.messageId   = random.randint(0, 65535)
+
+        if queryName == 'core':
+            msg.addOption( CoapOption(OptionType.UriPath, '.well-known') )
+            msg.addOption( CoapOption(OptionType.UriPath, 'core') )
+        
         # send message
         log.debug('Sending query')
+        self._client.send(msg)
 
     def close(self):
         '''Releases resources'''
@@ -85,6 +103,7 @@ if __name__ == '__main__':
     # read command line
     parser = OptionParser()
     parser.add_option('-a', type='string', dest='hostAddr')
+    parser.add_option('-p', type='int', dest='hostPort', default=COAP_PORT)
     parser.add_option('-s', type='int', dest='sourcePort', default=COAP_PORT)
     parser.add_option('-q', type='string', dest='query', default='')
 
@@ -92,7 +111,7 @@ if __name__ == '__main__':
     
     reader = None
     try:
-        reader = StatsReader(options.sourcePort, options.hostAddr)
+        reader = StatsReader(options.hostAddr, options.hostPort, options.sourcePort)
         if reader:
             # Setup query here since start() call doesn't return until the
             # reader is terminated.
