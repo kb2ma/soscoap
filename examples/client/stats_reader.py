@@ -12,9 +12,11 @@ Options:
    | -a <hostAddr> -- Host address to query
    | -q <query>  -- Name of query to run. Options:
    |                  core -- GET /.well-known/core
+   |                  stats -- GET /cli/stats
    | -s <port> -- Source port from which to send query and listen for
    |              response. Valuable for the Observe mechanism, where the
    |              server periodically sends responses.
+   | -o           Register as an observer for the query
 
 Run the reader on POSIX with:
    ``$ PYTHONPATH=../.. ./stats_reader.py -s 5682 -a bbbb::1 -q core``
@@ -55,6 +57,7 @@ class StatsReader(object):
     Attributes:
         :_addrTuple:  tuple IPv6 address tuple for message destination
         :_client:   CoapClient Provides CoAP message protocol
+        :_isObserver:  boolean Asks server for Observe notifications if True
     
     Usage:
         #. sr = StatsReader(sourcePort, hostAddr)  -- Create instance
@@ -63,10 +66,11 @@ class StatsReader(object):
                          thread, for example from a timer.
         #. sr.close() -- Cleanup
     '''
-    def __init__(self, hostAddr, hostPort, sourcePort):
+    def __init__(self, hostAddr, hostPort, sourcePort, isObserver):
         '''Initializes on destination host and source port.'''
-        self._hostTuple = (hostAddr, hostPort)
-        self._client    = CoapClient(sourcePort=sourcePort, dest=self._hostTuple)
+        self._hostTuple  = (hostAddr, hostPort)
+        self._client     = CoapClient(sourcePort=sourcePort, dest=self._hostTuple)
+        self._isObserver = isObserver
 
     def start(self):
         '''Starts networking; returns when networking is stopped.'''
@@ -84,6 +88,13 @@ class StatsReader(object):
         if queryName == 'core':
             msg.addOption( CoapOption(OptionType.UriPath, '.well-known') )
             msg.addOption( CoapOption(OptionType.UriPath, 'core') )
+        elif queryName == 'stats':
+            msg.addOption( CoapOption(OptionType.UriPath, 'cli') )
+            msg.addOption( CoapOption(OptionType.UriPath, 'stats') )
+
+        if self._isObserver:
+            # register
+            msg.addOption( CoapOption(OptionType.Observe, 0) )
         
         # send message
         log.debug('Sending query')
@@ -103,6 +114,7 @@ if __name__ == '__main__':
     # read command line
     parser = OptionParser()
     parser.add_option('-a', type='string', dest='hostAddr')
+    parser.add_option('-o', action='store_true', dest='isObserver', default=False)
     parser.add_option('-p', type='int', dest='hostPort', default=COAP_PORT)
     parser.add_option('-s', type='int', dest='sourcePort', default=COAP_PORT)
     parser.add_option('-q', type='string', dest='query', default='')
@@ -111,7 +123,8 @@ if __name__ == '__main__':
     
     reader = None
     try:
-        reader = StatsReader(options.hostAddr, options.hostPort, options.sourcePort)
+        reader = StatsReader(options.hostAddr, options.hostPort, options.sourcePort,
+                                                                 options.isObserver)
         if reader:
             # Setup query here since start() call doesn't return until the
             # reader is terminated.
