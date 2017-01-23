@@ -105,6 +105,7 @@ OptionType = _enum(
     UriHost       = OptionType(3, 'Uri-Host',       False,'string', (1,255), None),
     ETag          = OptionType(4, 'ETag',           True, 'opaque', (1,8),   None),
     IfNoneMatch   = OptionType(5, 'If-None-Match',  False,'empty',  (0,0),   None),
+    Observe       = OptionType(6, 'Observe',        False,'uint',   (0,3),   None),
     UriPort       = OptionType(7, 'Uri-Port',       False,'uint',   (0,2),   None),
     LocationPath  = OptionType(8, 'Location-Path',  True, 'string', (0,255), None),
     UriPath       = OptionType(11,'Uri-Path',       True, 'string', (0,255), None),
