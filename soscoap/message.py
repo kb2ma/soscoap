@@ -342,6 +342,12 @@ def _readOption(msg, ords, pos):
             option.value = _readOptionValue(optval, optionType.valueFormat)
         else:
             raise NotImplementedError('Option value must be uint')
+                
+    elif optionType == coap.OptionType.Observe:
+        if optionType.valueFormat == 'uint':
+            option.value = _readOptionValue(optval, optionType.valueFormat)
+        else:
+            raise NotImplementedError('Option value must be uint')
         
     else:
         raise NotImplementedError('Option number {0} not implemented'.format(optnum))
