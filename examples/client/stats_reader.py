@@ -19,7 +19,7 @@ Options:
    | -o           Register as an observer for the query
 
 Run the reader on POSIX with:
-   ``$ PYTHONPATH=../.. ./stats_reader.py -s 5682 -a bbbb::1 -q core``
+   ``$ PYTHONPATH=../.. ./stats_reader.py -s 5682 -a fe80::bbbb:2%tap0 -q core``
 '''
 from   __future__ import print_function
 import logging
@@ -84,6 +84,8 @@ class StatsReader(object):
         msg.codeClass   = CodeClass.Request
         msg.codeDetail  = RequestCode.GET
         msg.messageId   = random.randint(0, 65535)
+        msg.tokenLength = 2
+        msg.token       = (0x35, 0x61)
 
         if queryName == 'core':
             msg.addOption( CoapOption(OptionType.UriPath, '.well-known') )
