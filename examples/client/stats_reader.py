@@ -36,6 +36,7 @@ from   soscoap.message  import CoapMessage
 from   soscoap.message  import CoapOption
 from   soscoap.msgsock  import MessageSocket
 from   soscoap.client   import CoapClient
+from   soscoap.server   import CoapServer
 from   threading import Timer
 import time
 
@@ -57,27 +58,54 @@ class StatsReader(object):
     Attributes:
         :_addrTuple:  tuple IPv6 address tuple for message destination
         :_client:   CoapClient Provides CoAP message protocol
-        :_isObserver:  boolean Asks server for Observe notifications if True
+        :_queryName: string GET query to send to CoAP server
     
     Usage:
-        #. sr = StatsReader(sourcePort, hostAddr)  -- Create instance
+        #. sr = StatsReader(hostAddr, hostPort, sourcePort, query)  -- Create instance
         #. sr.start() -- Starts asyncore networking loop
-        #. sr.query() -- Runs a named query. Must be called from a different
-                         thread, for example from a timer.
         #. sr.close() -- Cleanup
     '''
-    def __init__(self, hostAddr, hostPort, sourcePort, isObserver):
+    def __init__(self, hostAddr, hostPort, sourcePort, query):
         '''Initializes on destination host and source port.'''
         self._hostTuple  = (hostAddr, hostPort)
         self._client     = CoapClient(sourcePort=sourcePort, dest=self._hostTuple)
-        self._isObserver = isObserver
+        self._client.registerForResponse(self._responseClient)
 
-    def start(self):
-        '''Starts networking; returns when networking is stopped.'''
-        self._client.start()
+        self._server     = CoapServer(port=5681)
+        self._server.registerForResourcePost(self._postServerResource)
 
-    def query(self, queryName):
-        '''Runs a named query'''
+        self._queryName  = query
+
+    def _responseClient(self, message):
+        '''Reads a response to a request
+        '''
+        prefix   = '0' if message.codeDetail < 10 else ''
+        obsList  = message.findOption(OptionType.Observe)
+        obsValue = '<none>' if len(obsList) == 0 else obsList[0].value
+        obsText  = 'len: {0}; val: {1}'.format(len(obsList), obsValue)
+        
+        print('Response code: {0}.{1}{2}; Observe {3}'.format(message.codeClass, prefix,
+                                                              message.codeDetail, obsText))
+
+    def _postServerResource(self, resource):
+        '''Reads a command
+        '''
+        log.debug('Resource path is {0}'.format(resource.path))
+        
+        observeAction = None
+        if resource.path == '/reg':
+            observeAction = 'reg'
+        elif resource.path == '/dereg':
+            observeAction = 'dereg'
+
+        self._query(observeAction)
+
+    def _query(self, observeAction):
+        '''Runs the reader's query
+
+        :param observeAction: reg (register), dereg (deregister), or None;
+                              triggers inclusion of Observe option
+        '''
         # create message
         msg             = CoapMessage(self._hostTuple)
         msg.messageType = MessageType.NON
@@ -87,20 +115,30 @@ class StatsReader(object):
         msg.tokenLength = 2
         msg.token       = (0x35, 0x61)
 
-        if queryName == 'core':
+        if self._queryName == 'core':
             msg.addOption( CoapOption(OptionType.UriPath, '.well-known') )
             msg.addOption( CoapOption(OptionType.UriPath, 'core') )
-        elif queryName == 'stats':
+        elif self._queryName == 'stats':
             msg.addOption( CoapOption(OptionType.UriPath, 'cli') )
             msg.addOption( CoapOption(OptionType.UriPath, 'stats') )
 
-        if self._isObserver:
+        if observeAction == 'reg':
             # register
             msg.addOption( CoapOption(OptionType.Observe, 0) )
-        
+        elif observeAction == 'dereg':
+            # deregister
+            msg.addOption( CoapOption(OptionType.Observe, 1) )
+
         # send message
         log.debug('Sending query')
         self._client.send(msg)
+
+    def start(self):
+        '''Starts networking; returns when networking is stopped.
+
+        Only need to start client, which automatically starts server, too.
+        '''
+        self._client.start()
 
     def close(self):
         '''Releases resources'''
@@ -126,15 +164,9 @@ if __name__ == '__main__':
     reader = None
     try:
         reader = StatsReader(options.hostAddr, options.hostPort, options.sourcePort,
-                                                                 options.isObserver)
-        if reader:
-            # Setup query here since start() call doesn't return until the
-            # reader is terminated.
-            t = Timer(2, StatsReader.query, args=(reader, options.query))
-            t.start()
-
-            print('Starting stats reader')
-            reader.start()
+                                                                 options.query)
+        print('Starting stats reader')
+        reader.start()
     except KeyboardInterrupt:
         pass
     except:

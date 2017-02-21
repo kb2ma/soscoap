@@ -32,6 +32,11 @@ class CoapClient(object):
     '''Client for CoAP requests. Like a CoAP server, binds to a socket, usually
     on the standard CoAP port. However, only accepts incoming responses when
     there is an outstanding request.
+    
+    Events:
+        Register a handler for an event via the 'registerFor<Event>' method.
+        
+        :ResourceGet:  Client has received a response for a resource GET request.
 
     Usage:
         #. cc = CoapClient() -- Create instance, using the standard CoAP port.
@@ -41,7 +46,8 @@ class CoapClient(object):
 
      Attributes:
         :_msgSocket: MessageSocket to send/receive messages
-        :_nextMessageId:    Next sequential value for a new Message ID
+        :_responseHook:  EventHook triggered when resource response received
+        :_nextMessageId: Next sequential value for a new Message ID
 
     .. automethod:: soscoap.server.CoapClient.__init__
    '''
@@ -67,6 +73,8 @@ class CoapClient(object):
             self._msgSocket = MessageSocket(localPort=sourcePort, remote=destTuple)
 
         self._msgSocket.registerForReceive(self._handleMessage)
+
+        self._responseHook = EventHook()
         
         # A random start is recommended in Sec. 4.4.
         self._nextMessageId = random.randint(0, 0xFFFF)
@@ -74,18 +82,22 @@ class CoapClient(object):
     def close(self):
         '''Releases system resources'''
         self._msgSocket.close()
+                
+    def registerForResponse(self, handler):
+        self._responseHook.register(handler)
 
     def send(self, message):
         '''Send a message'''
         self._msgSocket.send(message)
         
     def _handleMessage(self, message):
-        '''Accepts/reads response, and ignores a request'''
         try:
-            log.debug('Handling message for code class: {0}'.format(message.codeClass))
+            log.debug('Handling resource response...')
+            self._responseHook.trigger(message)
+
         except:
-            log.exception('Error handling message')
-        
+            log.exception('Error handling response')
+
     def _popMessageId(self):
         '''Returns the next sequential message ID, and increments'''
         nextid = self._nextMessageId
