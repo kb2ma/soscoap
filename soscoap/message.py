@@ -188,12 +188,12 @@ class CoapMessage(object):
         '''
         # must insert in ascending option type order
         for (i,o) in enumerate(self.options):
-            if o.type > option.type:
+            if o.type.number > option.type.number:
                 self.options.insert(i, option)
                 break;
         else:
             self.options.append(option)
-        
+
 #
 # Build functions
 #
@@ -202,7 +202,7 @@ def buildFrom(bytestr, address=None):
     '''Creates a CoapMessage from a raw byte source.
     
     :param bytestr: str Bytes comprising the message
-    :param addr:    4-tuple IPv6 address
+    :param addr:    4-tuple IPv6 address (adress, port, ?, ?)
     '''
     tooShortText = 'source byte string too short'
     if len(bytestr) < 4:

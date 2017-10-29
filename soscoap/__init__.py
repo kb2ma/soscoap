@@ -64,7 +64,7 @@ BYTESTR_ENCODING = 'latin1'
 MessageType = _enum(CON=0, NON=1, ACK=2, RST=3)
 '''Message type enum -- CON, etc.'''
 
-CodeClass = _enum(Request=0, Success=2, ClientError=4, ServerError=5)
+CodeClass = _enum(Empty=0, Request=0, Success=2, ClientError=4, ServerError=5)
 '''Enum for class part of message code -- a Request (0), or a response, like Success (2).'''
 
 RequestCode = _enum(GET=1, POST=2, PUT=3, DELETE=4)
@@ -74,9 +74,10 @@ SuccessResponseCode = _enum(Created=1, Deleted=2, Valid=3, Changed=4, Content=5)
 '''Enum for detail part of message code for success responses (Class 2) -- Created 
 (1 in 2.01), etc.'''
 
-ClientResponseCode = _enum(BadRequest=0, Unauthorized=1, BadOption=2, Forbidden=3,
-                      NotFound=4, MethodNotAllowed=5, NotAcceptable=6, PreconditionFailed=12,
-                      RequestEntityTooLarge=13, UnsupportedContentFormat=15)
+ClientResponseCode = _enum(Empty=0, BadRequest=0, Unauthorized=1, BadOption=2,
+                      Forbidden=3, NotFound=4, MethodNotAllowed=5, NotAcceptable=6,
+                      PreconditionFailed=12, RequestEntityTooLarge=13,
+                      UnsupportedContentFormat=15)
 '''Enum for detail part of message code for client error responses (Class 4) -- 
 BadRequest (0 in 4.00), etc.'''
 
