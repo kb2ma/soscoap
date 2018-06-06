@@ -85,6 +85,11 @@ class CoapServer(object):
             resource = SosResourceTransfer(message.absolutePath(), 
                                            sourceAddress=message.address)
 
+            # only reads the first query segment
+            queryList  = message.findOption(OptionType.UriQuery)
+            resource.pathQuery = queryList[0].value if len(queryList) else None
+
+
             if message.codeDetail == RequestCode.GET:
                 log.debug('Handling resource GET request...')
                 # Retrieve requested resource via event, and send reply

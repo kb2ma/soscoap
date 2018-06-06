@@ -320,7 +320,8 @@ def _readOption(msg, ords, pos):
     option        = CoapOption(optionType)
     option.length = optlen
     
-    if optionType == coap.OptionType.UriPath or optionType == coap.OptionType.UriHost:
+    if (optionType == coap.OptionType.UriPath or optionType == coap.OptionType.UriHost
+        or optionType == coap.OptionType.UriQuery):
         if optionType.valueFormat == 'string':
             option.value = _readOptionValue(optval, optionType.valueFormat)
         else:

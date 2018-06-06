@@ -17,6 +17,7 @@ class SosResourceTransfer(object):
     
     Attributes:
         :path:    str URI path for the resource
+        :pathQuery: str Query for the URI path
         :value:   object Representation of the resource suitable for messaging
         :type:    str Type of the value, using the same classification as 
                       soscoap.OptionType.valueFormat.
@@ -30,19 +31,22 @@ class SosResourceTransfer(object):
     
     def __init__(self, path, value=None, resourceType=None, sourceAddress=None):
         self.path          = path
+        self.pathQuery     = None
         self.value         = value
         self.type          = resourceType
         self.sourceAddress = sourceAddress
         self.resultClass   = None
         self.resultCode    = None
-            
+
     def __str__(self):
-        attrs = ', '.join(['{0}', 
-                           'val: {1}', 
-                           'type: {2}', 
-                           'sourceAddress: {3}',
-                           'resultClass: {4}',
-                           'resultCode: {5}']).format(self.path,
+        attrs = ', '.join(['{0}',
+                           'query: {1}'
+                           'val: {2}', 
+                           'type: {3}', 
+                           'sourceAddress: {4}',
+                           'resultClass: {5}',
+                           'resultCode: {6}']).format(self.path,
+                                                      self.pathQuery,
                                                       self.value,
                                                       self.type,
                                                       self.sourceAddress,
